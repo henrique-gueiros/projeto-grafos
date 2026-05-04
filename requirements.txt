@@ -1,0 +1,2 @@
+# Parte 1 (modelagem): apenas biblioteca padrão do Python 3.11+.
+# Nenhuma dependência externa obrigatória.

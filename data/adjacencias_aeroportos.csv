@@ -1,0 +1,82 @@
+origem,destino,tipo_conexao,justificativa,peso
+BEL,BSB,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Norte,2.0
+BEL,GIG,hub,conexão via hub nacional GIG (Sudeste) a partir da região Norte,2.0
+BEL,GRU,hub,conexão via hub nacional GRU (Sudeste) a partir da região Norte,2.0
+BEL,MAO,regional,mesma região (Norte),1.0
+BEL,PVH,regional,mesma região (Norte),1.0
+BEL,RBR,regional,mesma região (Norte),1.0
+BSB,CGH,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sudeste,2.0
+BSB,CNF,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sudeste,2.0
+BSB,CWB,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sul,2.0
+BSB,FLN,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sul,2.0
+BSB,FOR,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
+BSB,GIG,hub-hub,rota estratégica entre hubs nacionais,1.5
+BSB,GRU,hub-hub,rota estratégica entre hubs nacionais,1.5
+BSB,GYN,regional,mesma região (Centro-Oeste),1.0
+BSB,JPA,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
+BSB,MAO,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Norte,2.0
+BSB,NAT,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
+BSB,POA,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sul,2.0
+BSB,PVH,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Norte,2.0
+BSB,RBR,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Norte,2.0
+BSB,REC,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
+BSB,SSA,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
+BSB,THE,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
+BSB,VIX,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sudeste,2.0
+CGH,CNF,regional,mesma região (Sudeste),1.0
+CGH,GIG,regional,mesma região (Sudeste),1.0
+CGH,GRU,regional,mesma região (Sudeste),1.0
+CGH,VIX,regional,mesma região (Sudeste),1.0
+CNF,GIG,regional,mesma região (Sudeste),1.0
+CNF,GRU,regional,mesma região (Sudeste),1.0
+CNF,VIX,regional,mesma região (Sudeste),1.0
+CWB,FLN,regional,mesma região (Sul),1.0
+CWB,GIG,hub,conexão via hub nacional GIG (Sudeste) a partir da região Sul,2.0
+CWB,GRU,hub,conexão via hub nacional GRU (Sudeste) a partir da região Sul,2.0
+CWB,POA,regional,mesma região (Sul),1.0
+FLN,GIG,hub,conexão via hub nacional GIG (Sudeste) a partir da região Sul,2.0
+FLN,GRU,hub,conexão via hub nacional GRU (Sudeste) a partir da região Sul,2.0
+FLN,POA,regional,mesma região (Sul),1.0
+FOR,GIG,hub,conexão via hub nacional GIG (Sudeste) a partir da região Nordeste,2.0
+FOR,GRU,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
+FOR,JPA,regional,mesma região (Nordeste),1.0
+FOR,NAT,regional,mesma região (Nordeste),1.0
+FOR,REC,regional,mesma região (Nordeste),1.0
+FOR,SSA,regional,mesma região (Nordeste),1.0
+FOR,THE,regional,mesma região (Nordeste),1.0
+GIG,GRU,regional,mesma região (Sudeste),1.0
+GIG,GYN,hub,conexão via hub nacional GIG (Sudeste) a partir da região Centro-Oeste,2.0
+GIG,JPA,hub,conexão via hub nacional GIG (Sudeste) a partir da região Nordeste,2.0
+GIG,MAO,hub,conexão via hub nacional GIG (Sudeste) a partir da região Norte,2.0
+GIG,NAT,hub,conexão via hub nacional GIG (Sudeste) a partir da região Nordeste,2.0
+GIG,POA,hub,conexão via hub nacional GIG (Sudeste) a partir da região Sul,2.0
+GIG,PVH,hub,conexão via hub nacional GIG (Sudeste) a partir da região Norte,2.0
+GIG,RBR,hub,conexão via hub nacional GIG (Sudeste) a partir da região Norte,2.0
+GIG,REC,hub,conexão via hub nacional GIG (Sudeste) a partir da região Nordeste,2.0
+GIG,SSA,hub,conexão via hub nacional GIG (Sudeste) a partir da região Nordeste,2.0
+GIG,THE,hub,conexão via hub nacional GIG (Sudeste) a partir da região Nordeste,2.0
+GIG,VIX,regional,mesma região (Sudeste),1.0
+GRU,GYN,hub,conexão via hub nacional GRU (Sudeste) a partir da região Centro-Oeste,2.0
+GRU,JPA,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
+GRU,MAO,hub,conexão via hub nacional GRU (Sudeste) a partir da região Norte,2.0
+GRU,NAT,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
+GRU,POA,hub,conexão via hub nacional GRU (Sudeste) a partir da região Sul,2.0
+GRU,PVH,hub,conexão via hub nacional GRU (Sudeste) a partir da região Norte,2.0
+GRU,RBR,hub,conexão via hub nacional GRU (Sudeste) a partir da região Norte,2.0
+GRU,REC,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
+GRU,SSA,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
+GRU,THE,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
+GRU,VIX,regional,mesma região (Sudeste),1.0
+JPA,NAT,regional,mesma região (Nordeste),1.0
+JPA,REC,regional,mesma região (Nordeste),1.0
+JPA,SSA,regional,mesma região (Nordeste),1.0
+JPA,THE,regional,mesma região (Nordeste),1.0
+MAO,PVH,regional,mesma região (Norte),1.0
+MAO,RBR,regional,mesma região (Norte),1.0
+NAT,REC,regional,mesma região (Nordeste),1.0
+NAT,SSA,regional,mesma região (Nordeste),1.0
+NAT,THE,regional,mesma região (Nordeste),1.0
+PVH,RBR,regional,mesma região (Norte),1.0
+REC,SSA,regional,mesma região (Nordeste),1.0
+REC,THE,regional,mesma região (Nordeste),1.0
+SSA,THE,regional,mesma região (Nordeste),1.0
