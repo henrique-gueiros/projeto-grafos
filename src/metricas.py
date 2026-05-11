@@ -8,6 +8,7 @@ Saídas:
   out/global.json          — ordem, tamanho, densidade do grafo completo
   out/regioes.json         — lista de métricas por região (subgrafos induzidos)
   out/ego_aeroportos.csv   — tabela: aeroporto, grau, ordem_ego, tamanho_ego, densidade_ego
+  out/graus.csv            — aeroporto, grau (Parte 4)
 """
 
 from __future__ import annotations
@@ -116,6 +117,40 @@ def calc_ego(grafo: Graph) -> list[dict[str, Any]]:
     return resultado
 
 
+def calc_graus_rankings(ego_data: list[dict[str, Any]]) -> dict[str, Any]:
+    """
+    Parte 4 — Graus e rankings.
+
+    Recebe a lista já calculada por ``calc_ego`` e retorna:
+      - graus       : lista [{aeroporto, grau}] ordenada por grau DESC, depois IATA ASC
+      - mais_conectado  : aeroporto(s) com maior grau
+      - maior_densidade_local : aeroporto(s) com maior densidade_ego
+    """
+    # Lista de graus ordenada: maior grau primeiro, desempate por IATA
+    graus_sorted = sorted(
+        [{"aeroporto": r["aeroporto"], "grau": r["grau"]} for r in ego_data],
+        key=lambda x: (-x["grau"], x["aeroporto"]),
+    )
+
+    # Aeroporto(s) mais conectado(s)
+    grau_max = graus_sorted[0]["grau"] if graus_sorted else 0
+    mais_conectado = [r["aeroporto"] for r in graus_sorted if r["grau"] == grau_max]
+
+    # Aeroporto(s) com maior densidade local (densidade_ego)
+    dens_max = max((r["densidade_ego"] for r in ego_data), default=0.0)
+    maior_densidade_local = [
+        r["aeroporto"] for r in ego_data if r["densidade_ego"] == dens_max
+    ]
+
+    return {
+        "graus": graus_sorted,
+        "mais_conectado": mais_conectado,
+        "grau_maximo": grau_max,
+        "maior_densidade_local": maior_densidade_local,
+        "densidade_local_maxima": dens_max,
+    }
+
+
 # ---------------------------------------------------------------------------
 # I/O de saída
 # ---------------------------------------------------------------------------
@@ -152,6 +187,18 @@ def gravar_ego_csv(dados: list[dict[str, Any]], root: Path | None = None) -> Pat
     return caminho
 
 
+def gravar_graus_csv(dados: list[dict[str, Any]], root: Path | None = None) -> Path:
+    """Grava out/graus.csv com colunas aeroporto, grau (ordenado por grau DESC)."""
+    caminho = _out_dir(root) / "graus.csv"
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = ["aeroporto", "grau"]
+    with open(caminho, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(dados)
+    return caminho
+
+
 # ---------------------------------------------------------------------------
 # Função principal (chamada por solve.py / cli.py)
 # ---------------------------------------------------------------------------
@@ -165,18 +212,22 @@ def run(grafo: Graph, root: Path | None = None) -> dict[str, Any]:
     global_data = calc_global(grafo)
     regioes_data = calc_regioes(grafo)
     ego_data = calc_ego(grafo)
+    rankings_data = calc_graus_rankings(ego_data)
 
     path_global = gravar_global_json(global_data, root)
     path_regioes = gravar_regioes_json(regioes_data, root)
     path_ego = gravar_ego_csv(ego_data, root)
+    path_graus = gravar_graus_csv(rankings_data["graus"], root)
 
     return {
         "global": global_data,
         "regioes": regioes_data,
         "ego": ego_data,
+        "rankings": rankings_data,
         "arquivos": {
             "global_json": str(path_global),
             "regioes_json": str(path_regioes),
             "ego_csv": str(path_ego),
+            "graus_csv": str(path_graus),
         },
     }

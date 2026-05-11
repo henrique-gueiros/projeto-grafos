@@ -24,7 +24,7 @@ def project_root() -> Path:
 def data_dir(repo_root: Path | None = None) -> Path:
     base = project_root() if repo_root is None else repo_root
     return base / "data"
-
+        
 
 def load_airport_rows(
     path: Path | None = None,

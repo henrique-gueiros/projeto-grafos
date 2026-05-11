@@ -16,12 +16,13 @@ from src import metricas as _metricas
 
 def solve_parte3(root: Path | None = None, *, verbose: bool = True) -> dict[str, Any]:
     """
-    Parte 3 — Métricas globais e por grupo.
+    Partes 3 e 4 — Métricas globais, por grupo e rankings de grau.
 
     Constrói o grafo a partir dos CSVs em disco e calcula:
       - Grafo completo : ordem, tamanho, densidade  → out/global.json
       - Subgrafos por região                        → out/regioes.json
       - Ego-subredes por aeroporto                  → out/ego_aeroportos.csv
+      - Graus e rankings                            → out/graus.csv
 
     Parâmetros
     ----------
@@ -32,13 +33,14 @@ def solve_parte3(root: Path | None = None, *, verbose: bool = True) -> dict[str,
 
     Retorna
     -------
-    dict com chaves ``global``, ``regioes``, ``ego``, ``arquivos``.
+    dict com chaves ``global``, ``regioes``, ``ego``, ``rankings``, ``arquivos``.
     """
     grafo = graph_from_csv_files(root=root)
     resultado = _metricas.run(grafo, root)
 
     if verbose:
         _print_parte3(resultado)
+        _print_parte4(resultado)
 
     return resultado
 
@@ -86,3 +88,29 @@ def _print_parte3(resultado: dict[str, Any]) -> None:
     print(f"\nArquivos gerados:")
     for nome, caminho in arquivos.items():
         print(f"  [{nome}]  {caminho}")
+
+
+def _print_parte4(resultado: dict[str, Any]) -> None:
+    rankings = resultado["rankings"]
+    graus = rankings["graus"]
+
+    print("\n" + "=" * 62)
+    print("PARTE 4 — Graus e rankings")
+    print("=" * 62)
+
+    print(f"\n[1] Lista de graus (ordem decrescente)")
+    print(f"  {'IATA':<6} {'Grau':>5}")
+    print("  " + "-" * 13)
+    for row in graus:
+        print(f"  {row['aeroporto']:<6} {row['grau']:>5}")
+
+    mais = ", ".join(rankings["mais_conectado"])
+    print(f"\n[2] Aeroporto mais conectado (maior grau = {rankings['grau_maximo']}):")
+    print(f"    {mais}")
+
+    dens_apts = ", ".join(rankings["maior_densidade_local"])
+    print(
+        f"\n[3] Aeroporto com maior densidade local"
+        f" (densidade_ego = {rankings['densidade_local_maxima']:.6f}):"
+    )
+    print(f"    {dens_apts}")
