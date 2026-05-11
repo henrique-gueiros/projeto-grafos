@@ -2,16 +2,16 @@ origem,destino,tipo_conexao,justificativa,peso
 BEL,BSB,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Norte,2.0
 BEL,GIG,hub,conexão via hub nacional GIG (Sudeste) a partir da região Norte,2.0
 BEL,GRU,hub,conexão via hub nacional GRU (Sudeste) a partir da região Norte,2.0
-BEL,MAO,regional,mesma região (Norte),1.0
-BEL,PVH,regional,mesma região (Norte),1.0
-BEL,RBR,regional,mesma região (Norte),1.0
+BEL,MAO,regional,mesma região (Norte),1.5
+BEL,PVH,regional,mesma região (Norte),1.5
+BEL,RBR,regional,mesma região (Norte),1.5
 BSB,CGH,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sudeste,2.0
 BSB,CNF,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sudeste,2.0
 BSB,CWB,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sul,2.0
 BSB,FLN,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sul,2.0
 BSB,FOR,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
-BSB,GIG,hub-hub,rota estratégica entre hubs nacionais,1.5
-BSB,GRU,hub-hub,rota estratégica entre hubs nacionais,1.5
+BSB,GIG,hub-hub,rota estratégica entre hubs nacionais,2.0
+BSB,GRU,hub-hub,rota estratégica entre hubs nacionais,2.0
 BSB,GYN,regional,mesma região (Centro-Oeste),1.0
 BSB,JPA,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
 BSB,MAO,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Norte,2.0
@@ -23,27 +23,27 @@ BSB,REC,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nor
 BSB,SSA,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
 BSB,THE,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Nordeste,2.0
 BSB,VIX,hub,conexão via hub nacional BSB (Centro-Oeste) a partir da região Sudeste,2.0
-CGH,CNF,regional,mesma região (Sudeste),1.0
+CGH,CNF,regional,mesma região (Sudeste),1.5
 CGH,GIG,regional,mesma região (Sudeste),1.0
 CGH,GRU,regional,mesma região (Sudeste),1.0
-CGH,VIX,regional,mesma região (Sudeste),1.0
+CGH,VIX,regional,mesma região (Sudeste),1.5
 CNF,GIG,regional,mesma região (Sudeste),1.0
 CNF,GRU,regional,mesma região (Sudeste),1.0
-CNF,VIX,regional,mesma região (Sudeste),1.0
-CWB,FLN,regional,mesma região (Sul),1.0
+CNF,VIX,regional,mesma região (Sudeste),1.5
+CWB,FLN,regional,mesma região (Sul),1.5
 CWB,GIG,hub,conexão via hub nacional GIG (Sudeste) a partir da região Sul,2.0
 CWB,GRU,hub,conexão via hub nacional GRU (Sudeste) a partir da região Sul,2.0
-CWB,POA,regional,mesma região (Sul),1.0
+CWB,POA,regional,mesma região (Sul),1.5
 FLN,GIG,hub,conexão via hub nacional GIG (Sudeste) a partir da região Sul,2.0
 FLN,GRU,hub,conexão via hub nacional GRU (Sudeste) a partir da região Sul,2.0
-FLN,POA,regional,mesma região (Sul),1.0
+FLN,POA,regional,mesma região (Sul),1.5
 FOR,GIG,hub,conexão via hub nacional GIG (Sudeste) a partir da região Nordeste,2.0
 FOR,GRU,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
-FOR,JPA,regional,mesma região (Nordeste),1.0
-FOR,NAT,regional,mesma região (Nordeste),1.0
-FOR,REC,regional,mesma região (Nordeste),1.0
-FOR,SSA,regional,mesma região (Nordeste),1.0
-FOR,THE,regional,mesma região (Nordeste),1.0
+FOR,JPA,regional,mesma região (Nordeste),1.5
+FOR,NAT,regional,mesma região (Nordeste),1.5
+FOR,REC,regional,mesma região (Nordeste),1.5
+FOR,SSA,regional,mesma região (Nordeste),1.5
+FOR,THE,regional,mesma região (Nordeste),1.5
 GIG,GRU,regional,mesma região (Sudeste),1.0
 GIG,GYN,hub,conexão via hub nacional GIG (Sudeste) a partir da região Centro-Oeste,2.0
 GIG,JPA,hub,conexão via hub nacional GIG (Sudeste) a partir da região Nordeste,2.0
@@ -67,16 +67,16 @@ GRU,REC,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste
 GRU,SSA,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
 GRU,THE,hub,conexão via hub nacional GRU (Sudeste) a partir da região Nordeste,2.0
 GRU,VIX,regional,mesma região (Sudeste),1.0
-JPA,NAT,regional,mesma região (Nordeste),1.0
-JPA,REC,regional,mesma região (Nordeste),1.0
-JPA,SSA,regional,mesma região (Nordeste),1.0
-JPA,THE,regional,mesma região (Nordeste),1.0
-MAO,PVH,regional,mesma região (Norte),1.0
-MAO,RBR,regional,mesma região (Norte),1.0
-NAT,REC,regional,mesma região (Nordeste),1.0
-NAT,SSA,regional,mesma região (Nordeste),1.0
-NAT,THE,regional,mesma região (Nordeste),1.0
-PVH,RBR,regional,mesma região (Norte),1.0
-REC,SSA,regional,mesma região (Nordeste),1.0
-REC,THE,regional,mesma região (Nordeste),1.0
-SSA,THE,regional,mesma região (Nordeste),1.0
+JPA,NAT,regional,mesma região (Nordeste),1.5
+JPA,REC,regional,mesma região (Nordeste),1.5
+JPA,SSA,regional,mesma região (Nordeste),1.5
+JPA,THE,regional,mesma região (Nordeste),1.5
+MAO,PVH,regional,mesma região (Norte),1.5
+MAO,RBR,regional,mesma região (Norte),1.5
+NAT,REC,regional,mesma região (Nordeste),1.5
+NAT,SSA,regional,mesma região (Nordeste),1.5
+NAT,THE,regional,mesma região (Nordeste),1.5
+PVH,RBR,regional,mesma região (Norte),1.5
+REC,SSA,regional,mesma região (Nordeste),1.5
+REC,THE,regional,mesma região (Nordeste),1.5
+SSA,THE,regional,mesma região (Nordeste),1.5

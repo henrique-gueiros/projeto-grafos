@@ -40,13 +40,25 @@ Formato obrigatório:
 - **hub** — cada aeroporto que não é hub nacional (`GRU`, `GIG`, `BSB`) liga-se a esses hubs que estejam **fora** da sua região.
 - **hub-hub** — eixos entre hubs nacionais ainda não cobertos pelo regional: `GRU–BSB` e `GIG–BSB` (`GRU–GIG` já é regional, ambos no Sudeste).
 
-### Régua de pesos (Seção 5)
+### Pesos das arestas (Parte 5 - Modelo híbrido)
 
-| `tipo_conexao` | Peso | Significado |
-|----------------|------|-------------|
-| `regional`     | 1.0  | Voo curto, mesma região |
-| `hub`          | 2.0  | Conexão via hub nacional (outra região) |
-| `hub-hub`      | 1.5  | Eixo entre hubs nacionais |
+Para calcular a distância com Dijkstra (Parte 6), utilizamos um modelo híbrido com múltiplos critérios.
+Não utilizamos pesos negativos, preservando a lógica para que Bellman-Ford seja explorado na Parte 2 (se necessário).
+
+Fórmula adotada:
+`peso = 1.0 + penalidade_regiao + penalidade_hub`
+
+**Critérios:**
+- **Base**: `1.0` (custo mínimo de qualquer conexão).
+- **Penalidade de região (`penalidade_regiao`)**: `+1.0` se a conexão cruzar fronteiras regionais (voo tipicamente mais longo ou que exige mais conexões).
+- **Penalidade de hub (`penalidade_hub`)**: `+0.5` se NENHUM dos aeroportos da conexão for um hub nacional (`GRU`, `GIG`, `BSB`). Rotas fora de grandes eixos costumam ter menor frequência de voos e maior custo operacional.
+
+**Tabela resultante de pesos:**
+| Situação | Cálculo (`base + reg + hub`) | Peso Final |
+|---|---|---|
+| Regional intra-região com hub (ex: BSB-GYN) | 1.0 + 0.0 + 0.0 | **1.0** |
+| Regional intra-região sem hub (ex: FOR-JPA) | 1.0 + 0.0 + 0.5 | **1.5** |
+| Inter-regional com hub (ex: GRU-REC ou BSB-GRU) | 1.0 + 1.0 + 0.0 | **2.0** |
 
 ### Requisitos obrigatórios
 

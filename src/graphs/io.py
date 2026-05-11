@@ -16,6 +16,35 @@ from typing import Any
 HUBS = frozenset({"GRU", "GIG", "BSB"})
 
 
+def calc_peso(
+    iata_a: str,
+    iata_b: str,
+    regiao_a: str,
+    regiao_b: str,
+) -> float:
+    """
+    Parte 5 — Modelo híbrido de pesos (sem pesos negativos).
+
+    Fórmula:
+        peso = 1.0 + penalidade_regiao + penalidade_hub
+
+    Penalidades:
+      penalidade_regiao : +1.0 se as regiões forem diferentes
+                          (voo exige mais escala / distância maior)
+      penalidade_hub    : +0.5 se NENHUM dos dois aeroportos for hub nacional
+                          (sem hub → menos frequência / mais custo operacional)
+
+    Tabela resultante:
+      regional intra-região + ao menos 1 hub   → 1.0 + 0.0 + 0.0 = 1.0
+      regional intra-região sem hub            → 1.0 + 0.0 + 0.5 = 1.5
+      inter-regional com ao menos 1 hub        → 1.0 + 1.0 + 0.0 = 2.0
+      inter-regional sem hub (improvável)      → 1.0 + 1.0 + 0.5 = 2.5
+    """
+    pen_regiao = 1.0 if regiao_a != regiao_b else 0.0
+    pen_hub = 0.0 if (iata_a in HUBS or iata_b in HUBS) else 0.5
+    return 1.0 + pen_regiao + pen_hub
+
+
 def project_root() -> Path:
     """Raiz do repositório (pasta que contém ``data/``)."""
     return Path(__file__).resolve().parent.parent.parent
@@ -77,12 +106,13 @@ def build_adjacencias_edges(airport_rows: list[dict[str, str]]) -> dict[tuple[st
 
     for regiao, iata_list in sorted(by_regiao.items()):
         for iata_a, iata_b in combinations(sorted(iata_list), 2):
+            peso = calc_peso(iata_a, iata_b, regiao, regiao)
             add_edge(
                 iata_a,
                 iata_b,
                 "regional",
                 f"mesma região ({regiao})",
-                1.0,
+                peso,
             )
 
     for row in airport_rows:
@@ -94,12 +124,13 @@ def build_adjacencias_edges(airport_rows: list[dict[str, str]]) -> dict[tuple[st
             hub_reg = iata_to_regiao[hub]
             if hub_reg == regiao:
                 continue
+            peso = calc_peso(iata, hub, regiao, hub_reg)
             add_edge(
                 iata,
                 hub,
                 "hub",
                 f"conexão via hub nacional {hub} ({hub_reg}) a partir da região {regiao}",
-                2.0,
+                peso,
             )
 
     add_edge(
@@ -107,14 +138,14 @@ def build_adjacencias_edges(airport_rows: list[dict[str, str]]) -> dict[tuple[st
         "BSB",
         "hub-hub",
         "rota estratégica entre hubs nacionais",
-        1.5,
+        calc_peso("GRU", "BSB", iata_to_regiao["GRU"], iata_to_regiao["BSB"]),
     )
     add_edge(
         "GIG",
         "BSB",
         "hub-hub",
         "rota estratégica entre hubs nacionais",
-        1.5,
+        calc_peso("GIG", "BSB", iata_to_regiao["GIG"], iata_to_regiao["BSB"]),
     )
 
     return edges
