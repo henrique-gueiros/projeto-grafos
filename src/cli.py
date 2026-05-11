@@ -7,13 +7,15 @@ Uso geral:
 Subcomandos disponíveis:
     gerar       Gera data/adjacencias_aeroportos.csv a partir do modelo
     validar     Valida aeroportos_data.csv + adjacencias_aeroportos.csv
-    metricas    Parte 3: calcula e grava métricas globais e por grupo
+    metricas    Parte 3 e 4: calcula e grava métricas globais e rankings
+    distancias  Parte 6: calcula menor caminho (Dijkstra) para pares em rotas.csv
 
 Exemplos:
     python -m src.cli gerar
     python -m src.cli validar
     python -m src.cli metricas
-    python -m src.cli metricas --root /caminho/para/projeto
+    python -m src.cli distancias
+    python -m src.cli distancias --root /caminho/para/projeto
 """
 
 from __future__ import annotations
@@ -56,6 +58,13 @@ def _cmd_metricas(root: Path | None) -> int:
     return 0
 
 
+def _cmd_distancias(root: Path | None) -> int:
+    from src.solve import solve_parte6
+
+    solve_parte6(root=root, verbose=True)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m src.cli",
@@ -86,8 +95,17 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser(
         "metricas",
         help=(
-            "Parte 3: calcula ordem/tamanho/densidade do grafo completo, "
-            "subgrafos por região e ego-subredes por aeroporto"
+            "Partes 3 e 4: calcula ordem/tamanho/densidade do grafo completo, "
+            "subgrafos por região, ego-subredes e rankings de grau"
+        ),
+    )
+
+    # --- distancias ---
+    subparsers.add_parser(
+        "distancias",
+        help=(
+            "Parte 6: calcula menor caminho (Dijkstra) para cada par "
+            "em data/rotas.csv e grava out/distancias_rotas.csv"
         ),
     )
 
@@ -98,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
         "gerar": _cmd_gerar,
         "validar": _cmd_validar,
         "metricas": _cmd_metricas,
+        "distancias": _cmd_distancias,
     }
     return dispatch[args.cmd](root)
 

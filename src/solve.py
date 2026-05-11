@@ -12,6 +12,7 @@ from typing import Any
 
 from src.graphs.graph import graph_from_csv_files
 from src import metricas as _metricas
+from src import distancias as _distancias
 
 
 def solve_parte3(root: Path | None = None, *, verbose: bool = True) -> dict[str, Any]:
@@ -114,3 +115,38 @@ def _print_parte4(resultado: dict[str, Any]) -> None:
         f" (densidade_ego = {rankings['densidade_local_maxima']:.6f}):"
     )
     print(f"    {dens_apts}")
+
+
+def solve_parte6(root: Path | None = None, *, verbose: bool = True) -> dict[str, Any]:
+    """
+    Parte 6 — Distância entre aeroportos X e Y.
+
+    Lê ``data/rotas.csv``, constrói o grafo e calcula o menor caminho
+    (Dijkstra, pesos da Seção 5) para cada par.
+
+    Saída: out/distancias_rotas.csv
+    """
+    grafo = graph_from_csv_files(root=root)
+    resultado = _distancias.run(grafo, root)
+
+    if verbose:
+        _print_parte6(resultado)
+
+    return resultado
+
+
+def _print_parte6(resultado: dict[str, Any]) -> None:
+    distancias = resultado["distancias"]
+    arquivo = resultado["arquivo"]
+
+    print("=" * 62)
+    print("PARTE 6 — Distância entre aeroportos (Dijkstra)")
+    print("=" * 62)
+
+    print(f"\n  {'Origem':<6} {'Destino':<8} {'Custo':>8}  Caminho")
+    print("  " + "-" * 56)
+    for r in distancias:
+        custo_str = f"{r['custo']:>8}" if r['custo'] != 'inf' else '     inf'
+        print(f"  {r['origem']:<6} {r['destino']:<8} {custo_str}  {r['caminho']}")
+
+    print(f"\nArquivo gerado: {arquivo}")
