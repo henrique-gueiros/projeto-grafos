@@ -16,6 +16,7 @@ Exemplos:
     python -m src.cli metricas
     python -m src.cli distancias
     python -m src.cli distancias --root /caminho/para/projeto
+    python -m src.cli viz
 """
 
 from __future__ import annotations
@@ -65,6 +66,15 @@ def _cmd_distancias(root: Path | None) -> int:
     return 0
 
 
+def _cmd_viz(root: Path | None) -> int:
+    from src.graphs.graph import graph_from_csv_files
+    from src.analise_visual import run_all_visualizations
+
+    grafo = graph_from_csv_files(root=root)
+    run_all_visualizations(grafo, root=root)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m src.cli",
@@ -109,6 +119,12 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
 
+    # --- viz ---
+    subparsers.add_parser(
+        "viz",
+        help="Gera visualizações e análises (Requisitos 7 e 8)",
+    )
+
     args = parser.parse_args(argv)
     root: Path | None = args.root.resolve() if args.root else None
 
@@ -117,6 +133,7 @@ def main(argv: list[str] | None = None) -> int:
         "validar": _cmd_validar,
         "metricas": _cmd_metricas,
         "distancias": _cmd_distancias,
+        "viz": _cmd_viz,
     }
     return dispatch[args.cmd](root)
 
