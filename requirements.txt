@@ -1,2 +1,12 @@
-# Parte 1 (modelagem): apenas biblioteca padrão do Python 3.11+.
-# Nenhuma dependência externa obrigatória.
+# Dependências do projeto — Python 3.11+
+# Algoritmos (BFS, DFS, Dijkstra, Bellman-Ford): implementação própria, sem libs externas.
+
+# Visualizações estáticas (Requisitos 7 e 8)
+matplotlib>=3.7
+numpy>=1.24
+
+# Visualização interativa (Requisito 9)
+pyvis>=0.3.2
+
+# Visualizações existentes (analise_visual.py — layout gráfico apenas)
+networkx>=3.1
