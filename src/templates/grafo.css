@@ -270,3 +270,20 @@ body .ts-dropdown .option:hover {
 
 #leg footer { font-size: 10px; color: #666; margin-top: 9px;
   border-top: 1px solid #2e2e42; padding-top: 6px; }
+
+#grafo-tooltip {
+  display: none;
+  position: fixed;
+  z-index: 10003;
+  max-width: 260px;
+  padding: 10px 12px;
+  background: rgba(26, 26, 42, 0.97);
+  border: 1px solid #2e2e42;
+  border-radius: 8px;
+  color: #ddd;
+  font-size: 12px;
+  line-height: 1.45;
+  pointer-events: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+}
+#grafo-tooltip b { color: #fff; }

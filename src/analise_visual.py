@@ -311,6 +311,7 @@ def _injetar_legenda(
     )
 
     css = _ler_template("grafo.css")
+    js_tooltip = _ler_template("tooltip.js")
     js_filtro = _ler_template("filtro_sidebar.js")
     js_caminhos = _ler_template("caminhos_legenda.js")
     legenda = _ler_template("legenda.html").format(
@@ -338,6 +339,7 @@ def _injetar_legenda(
         f"<style>\n{css}\n</style>\n"
         f"{legenda}\n"
         f"<script>window.CAMINHOS_OBRIGATORIOS = {caminhos_config};</script>\n"
+        f"<script>\n{js_tooltip}\n</script>\n"
         f"<script>\n{js_filtro}\n</script>\n"
         f"<script>\n{js_caminhos}\n</script>"
     )
@@ -458,7 +460,7 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
             edge.destino,
             color={"color": DEFAULT_EDGE, "highlight": "#ffffff"},
             width=1,
-            title=edge_tooltip,
+            tooltipHtml=edge_tooltip,
         )
 
     net.set_options(json.dumps({
