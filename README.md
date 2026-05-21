@@ -14,7 +14,10 @@ Disciplina de Grafos — Parte 1: modelagem, métricas, algoritmos e visualizaç
 git clone <url-do-repositorio>
 cd projeto-grafos
 
-# Instale as dependências
+# Ambiente virtual (Python 3.12 do Homebrew)
+/opt/homebrew/bin/python3.12 -m venv .venv
+source .venv/bin/activate   # ou: source activate.sh
+
 pip install -r requirements.txt
 ```
 

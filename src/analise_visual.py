@@ -280,13 +280,24 @@ def visualizar_subgrafo_maior_grau(grafo: Graph, root: Path | None = None):
 # Requisito 9 — Grafo interativo (pyvis)
 # ---------------------------------------------------------------------------
 
+_TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+
+
+def _ler_template(nome: str) -> str:
+    return (_TEMPLATES_DIR / nome).read_text(encoding="utf-8")
+
+
 def _injetar_legenda(
     html_path: Path,
     caminho1: list[str] | None,
     caminho2: list[str] | None,
+    path1_edges: set[tuple[str, str]],
+    path2_edges: set[tuple[str, str]],
     region_colors: dict[str, str],
     path1_color: str,
     path2_color: str,
+    default_edge: str = "#4a4a5a",
+    highlight_width: int = 4,
 ) -> None:
     """Injeta legenda e estilos customizados no HTML gerado pelo pyvis."""
     c1_str = " → ".join(caminho1) if caminho1 else "N/D"
@@ -299,60 +310,38 @@ def _injetar_legenda(
         for r, c in region_colors.items()
     )
 
-    legend_html = f"""
-<style>
-  #leg {{
-    position: fixed; top: 10px; right: 10px;
-    background: rgba(10, 10, 20, 0.93);
-    border: 1px solid #444; border-radius: 8px;
-    padding: 14px 16px; color: #ddd;
-    font-family: Arial, sans-serif; font-size: 12px;
-    z-index: 9999; max-width: 300px;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.6);
-  }}
-  #leg h3 {{ margin: 0 0 8px; font-size: 13px; color: #fff;
-    border-bottom: 1px solid #555; padding-bottom: 5px; }}
-  #leg details {{ margin-top: 7px; }}
-  #leg summary {{ cursor: pointer; color: #ccc; font-weight: bold;
-    font-size: 12px; user-select: none; }}
-  .leg-row {{ display: flex; align-items: center; margin: 4px 0; gap: 7px; }}
-  .dot {{ width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }}
-  .line {{ width: 26px; height: 4px; border-radius: 2px; flex-shrink: 0; }}
-  .path-detail {{ font-size: 10px; color: #999; margin-left: 33px;
-    margin-top: -2px; margin-bottom: 4px; word-break: break-all; }}
-  #leg footer {{ font-size: 10px; color: #666; margin-top: 9px;
-    border-top: 1px solid #444; padding-top: 6px; }}
-</style>
-<div id="leg">
-  <h3>&#9992;&nbsp;Rede de Aeroportos — Brasil</h3>
+    css = _ler_template("grafo.css")
+    js_filtro = _ler_template("filtro_sidebar.js")
+    js_caminhos = _ler_template("caminhos_legenda.js")
+    legenda = _ler_template("legenda.html").format(
+        region_rows=region_rows,
+        path1_color=path1_color,
+        path2_color=path2_color,
+        c1_str=c1_str,
+        c2_str=c2_str,
+    )
 
-  <details open>
-    <summary>Regiões (cor do nó)</summary>
-    <div style="margin-top:5px">{region_rows}</div>
-  </details>
+    caminhos_config = json.dumps({
+        "path1": {
+            "color": path1_color,
+            "edges": [list(pair) for pair in sorted(path1_edges)],
+        },
+        "path2": {
+            "color": path2_color,
+            "edges": [list(pair) for pair in sorted(path2_edges)],
+        },
+        "defaultEdge": {"color": default_edge, "width": 1},
+        "highlightWidth": highlight_width,
+    })
 
-  <details open>
-    <summary>Caminhos obrigatórios</summary>
-    <div style="margin-top:5px">
-      <div class="leg-row">
-        <div class="line" style="background:{path1_color}"></div>
-        <b style="color:{path1_color}">Recife → Porto Alegre</b>
-      </div>
-      <div class="path-detail">{c1_str}</div>
-      <div class="leg-row">
-        <div class="line" style="background:{path2_color}"></div>
-        <b style="color:{path2_color}">Manaus → São Paulo</b>
-      </div>
-      <div class="path-detail">{c2_str}</div>
-    </div>
-  </details>
+    legend_html = (
+        f"<style>\n{css}\n</style>\n"
+        f"{legenda}\n"
+        f"<script>window.CAMINHOS_OBRIGATORIOS = {caminhos_config};</script>\n"
+        f"<script>\n{js_filtro}\n</script>\n"
+        f"<script>\n{js_caminhos}\n</script>"
+    )
 
-  <footer>
-    Passe o mouse sobre nós/arestas para detalhes.<br>
-    Use a barra de busca acima para filtrar aeroportos.
-  </footer>
-</div>
-"""
     html = html_path.read_text(encoding="utf-8")
     html = html.replace("</body>", legend_html + "\n</body>")
     html_path.write_text(html, encoding="utf-8")
@@ -365,8 +354,8 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
     Recursos:
     - Tooltip por nó: grau, região, densidade_ego.
     - Caixa de busca/filtro (filter_menu do pyvis).
-    - Legenda e destaque dos caminhos obrigatórios REC→POA e MAO→GRU,
-      calculados com o Dijkstra próprio do projeto.
+    - Legenda com caminhos obrigatórios REC→POA e MAO→GRU clicáveis
+      (destaque nas arestas só ao clicar na legenda).
     """
     try:
         from pyvis.network import Network
@@ -438,15 +427,7 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
         in_p2 = iata in path2_nodes
         is_endpoint = iata in {"REC", "POA", "MAO", "GRU"}
 
-        if in_p1 and in_p2:
-            border_color, border_width = "#ffaa00", 5
-        elif in_p1:
-            border_color, border_width = PATH1_COLOR, 4
-        elif in_p2:
-            border_color, border_width = PATH2_COLOR, 4
-        else:
-            border_color, border_width = base_color, 1
-
+        border_color, border_width = base_color, 1
         node_size = 32 if is_endpoint else (22 if (in_p1 or in_p2) else 16)
 
         net.add_node(
@@ -465,21 +446,6 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
         )
 
     for edge in grafo.edges():
-        u, v = tuple(sorted((edge.origem, edge.destino)))
-        pair = (u, v)
-
-        in_p1 = pair in path1_edges
-        in_p2 = pair in path2_edges
-
-        if in_p1 and in_p2:
-            edge_color, width = "#ffaa00", 5
-        elif in_p1:
-            edge_color, width = PATH1_COLOR, 4
-        elif in_p2:
-            edge_color, width = PATH2_COLOR, 4
-        else:
-            edge_color, width = DEFAULT_EDGE, 1
-
         edge_tooltip = (
             f"{edge.origem} ↔ {edge.destino}"
             f" | Tipo: {edge.tipo_conexao}"
@@ -490,8 +456,8 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
         net.add_edge(
             edge.origem,
             edge.destino,
-            color={"color": edge_color, "highlight": "#ffffff"},
-            width=width,
+            color={"color": DEFAULT_EDGE, "highlight": "#ffffff"},
+            width=1,
             title=edge_tooltip,
         )
 
@@ -510,7 +476,7 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
         "interaction": {
             "hover": True,
             "tooltipDelay": 80,
-            "navigationButtons": True,
+            "navigationButtons": False,
             "keyboard": True,
         },
     }))
@@ -520,7 +486,8 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
 
     _injetar_legenda(
         html_path, caminho_rec_poa, caminho_mao_gru,
-        REGION_COLORS, PATH1_COLOR, PATH2_COLOR,
+        path1_edges, path2_edges,
+        REGION_COLORS, PATH1_COLOR, PATH2_COLOR, DEFAULT_EDGE,
     )
 
     return html_path

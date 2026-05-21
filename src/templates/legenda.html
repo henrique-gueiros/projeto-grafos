@@ -1,0 +1,47 @@
+<button id="btn-filtro-toggle" type="button" aria-label="Abrir painel de filtros" title="Filtros">
+  <span></span><span></span><span></span>
+</button>
+
+<div id="leg">
+  <h3>&#9992;&nbsp;Rede de Aeroportos — Brasil</h3>
+
+  <details open>
+    <summary>Regiões (cor do nó)</summary>
+    <div style="margin-top:5px">{region_rows}</div>
+  </details>
+
+  <details open>
+    <summary>Caminhos obrigatórios</summary>
+    <div style="margin-top:5px">
+      <button
+        type="button"
+        class="path-toggle"
+        data-caminho="path1"
+        aria-pressed="false"
+        style="--path-color:{path1_color}"
+      >
+        <div class="line" style="background:{path1_color}"></div>
+        <span class="path-label"><b>Recife → Porto Alegre</b></span>
+      </button>
+      <div class="path-detail">{c1_str}</div>
+
+      <button
+        type="button"
+        class="path-toggle"
+        data-caminho="path2"
+        aria-pressed="false"
+        style="--path-color:{path2_color}"
+      >
+        <div class="line" style="background:{path2_color}"></div>
+        <span class="path-label"><b>Manaus → São Paulo</b></span>
+      </button>
+      <div class="path-detail">{c2_str}</div>
+    </div>
+  </details>
+
+  <footer>
+    Passe o mouse sobre nós/arestas para detalhes.<br>
+    Clique nos caminhos acima para destacá-los no grafo.<br>
+    Use o botão &#9776; à esquerda para abrir os filtros.
+  </footer>
+</div>
