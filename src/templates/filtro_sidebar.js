@@ -56,6 +56,10 @@
     }
 
     sidebar.appendChild(filterMenu);
+    var charts = document.getElementById("graficos-dinamicos");
+    if (charts) {
+      sidebar.appendChild(charts);
+    }
     document.body.insertBefore(sidebar, document.body.firstChild);
 
     // Toggle da sidebar

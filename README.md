@@ -132,7 +132,8 @@ Após rodar `python -m src.cli viz`, a pasta `out/` conterá:
 | `ego_aeroportos.csv` | Parte 3 | Grau e ego-rede por aeroporto |
 | `graus.csv` | Parte 4 | Ranking de graus decrescente |
 | `distancias_rotas.csv` | Parte 6 | Custo e caminho mínimo para cada par |
-| `arvore_percurso.png` | Req 7 | Subgrafo dos caminhos REC→POA e MAO→GRU |
+| `arvore_percurso_rec_poa.png` | Req 7 | Subgrafo do caminho REC→POA |
+| `arvore_percurso_mao_gru.png` | Req 7 | Subgrafo do caminho MAO→GRU |
 | `distribuicao_graus.png` | Req 8 | Histograma de distribuição de graus |
 | `ranking_conectividade.png` | Req 8 | Top 10 aeroportos mais conectados |
 | `comparacao_regioes.png` | Req 8 | Aeroportos por região |

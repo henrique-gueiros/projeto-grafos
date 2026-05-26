@@ -4,8 +4,8 @@ Este arquivo centraliza a análise descritiva das métricas e visualizações ge
 
 ## 1. Notas Analíticas - Requisitos 7 e 8
 
-**1. Árvore de Percurso (`arvore_percurso.png`)**
-- O que está sendo mostrado: O subgrafo formado pelas arestas dos caminhos mínimos entre Recife-Porto Alegre e Manaus-São Paulo (GRU).
+**1. Árvores de Percurso (`arvore_percurso_rec_poa.png` e `arvore_percurso_mao_gru.png`)**
+- O que está sendo mostrado: Dois subgrafos separados, um para o caminho mínimo Recife-Porto Alegre e outro para Manaus-São Paulo (GRU).
 - Insight: Revela a conectividade necessária para realizar essas rotas específicas, destacando a espinha dorsal do percurso.
 - Por que: A visualização de grafo é ideal para mostrar conexões topológicas e a hierarquia do trajeto.
 

@@ -80,78 +80,53 @@ def visualizar_arvore_percurso(grafo: Graph, root: Path | None = None):
     _, caminho1 = dijkstra_caminho(grafo, "REC", "POA")
     _, caminho2 = dijkstra_caminho(grafo, "MAO", "GRU")
 
-    all_nodes: set[str] = set()
-    if caminho1:
-        all_nodes.update(caminho1)
-    if caminho2:
-        all_nodes.update(caminho2)
-
-    if not all_nodes:
-        print("Aviso: nenhum percurso encontrado para visualização.")
-        return None
-
-    # Layout: cada caminho em uma linha horizontal própria
-    pos: dict[str, tuple[float, float]] = {}
-    if caminho1:
-        n = len(caminho1)
-        xs = [i / max(n - 1, 1) for i in range(n)]
-        for node, x in zip(caminho1, xs):
-            pos[node] = (x, 0.6)
-    if caminho2:
-        n = len(caminho2)
-        xs = [i / max(n - 1, 1) for i in range(n)]
-        for node, x in zip(caminho2, xs):
-            if node not in pos:
-                pos[node] = (x, -0.3)
-
-    fig, ax = plt.subplots(figsize=(11, 6))
-    ax.set_aspect("equal")
-    ax.axis("off")
-    ax.set_title(
-        "Subgrafo dos Percursos Obrigatórios (Árvore de Caminho)",
-        fontsize=13, fontweight="bold", pad=14,
-    )
-
-    # Arestas do caminho 1
-    if caminho1:
-        for i in range(len(caminho1) - 1):
-            x1, y1 = pos[caminho1[i]]
-            x2, y2 = pos[caminho1[i + 1]]
-            _draw_edge(ax, x1, y1, x2, y2, color="#e53935", linewidth=3.5)
-
-    # Arestas do caminho 2
-    if caminho2:
-        for i in range(len(caminho2) - 1):
-            x1, y1 = pos[caminho2[i]]
-            x2, y2 = pos[caminho2[i + 1]]
-            _draw_edge(ax, x1, y1, x2, y2, color="#1e88e5", linewidth=3.5)
-
-    # Nós
-    path1_set = set(caminho1 or [])
-    path2_set = set(caminho2 or [])
-    for node, (x, y) in pos.items():
-        in_p1, in_p2 = node in path1_set, node in path2_set
-        if in_p1 and in_p2:
-            color, border = "#ab47bc", "white"
-        elif in_p1:
-            color, border = "#ef9a9a", "white"
-        else:
-            color, border = "#90caf9", "white"
-        _draw_node(ax, x, y, node, color, border, radius=0.06)
-
-    ax.set_xlim(-0.15, 1.15)
-    ax.set_ylim(-0.7, 1.1)
-
-    legend_elements = [
-        mlines.Line2D([0], [0], color="#e53935", linewidth=3, label="REC → POA"),
-        mlines.Line2D([0], [0], color="#1e88e5", linewidth=3, label="MAO → GRU"),
+    caminhos = [
+        ("REC", "POA", caminho1, "#e53935", "#ef9a9a", "arvore_percurso_rec_poa.png"),
+        ("MAO", "GRU", caminho2, "#1e88e5", "#90caf9", "arvore_percurso_mao_gru.png"),
     ]
-    ax.legend(handles=legend_elements, loc="lower right", fontsize=10, framealpha=0.8)
+    caminhos_encontrados = [item for item in caminhos if item[2]]
 
-    png_path = out_dir / "arvore_percurso.png"
-    plt.savefig(png_path, bbox_inches="tight", dpi=150)
-    plt.close()
-    return png_path
+    if not caminhos_encontrados:
+        print("Aviso: nenhum percurso encontrado para visualização.")
+        return []
+
+    paths: list[Path] = []
+    for origem, destino, caminho, edge_color, node_color, filename in caminhos_encontrados:
+        n = len(caminho)
+        xs = [i / max(n - 1, 1) for i in range(n)]
+        pos = {node: (x, 0.0) for node, x in zip(caminho, xs)}
+
+        fig, ax = plt.subplots(figsize=(11, 3.2))
+        ax.set_aspect("equal")
+        ax.axis("off")
+        ax.set_title(
+            f"Árvore de Percurso {origem} → {destino}",
+            fontsize=13, fontweight="bold", pad=14,
+        )
+
+        for i in range(len(caminho) - 1):
+            x1, y1 = pos[caminho[i]]
+            x2, y2 = pos[caminho[i + 1]]
+            _draw_edge(ax, x1, y1, x2, y2, color=edge_color, linewidth=3.5)
+
+        for node, (x, y) in pos.items():
+            _draw_node(ax, x, y, node, node_color, "white", radius=0.06)
+
+        ax.set_xlim(-0.15, 1.15)
+        ax.set_ylim(-0.25, 0.25)
+        ax.legend(
+            handles=[mlines.Line2D([0], [0], color=edge_color, linewidth=3, label=f"{origem} → {destino}")],
+            loc="lower right",
+            fontsize=10,
+            framealpha=0.8,
+        )
+
+        png_path = out_dir / filename
+        plt.savefig(png_path, bbox_inches="tight", dpi=150)
+        plt.close(fig)
+        paths.append(png_path)
+
+    return paths
 
 
 # ---------------------------------------------------------------------------
@@ -294,6 +269,7 @@ def _injetar_legenda(
     path1_edges: set[tuple[str, str]],
     path2_edges: set[tuple[str, str]],
     region_colors: dict[str, str],
+    chart_data: list[dict],
     path1_color: str,
     path2_color: str,
     default_edge: str = "#4a4a5a",
@@ -314,6 +290,7 @@ def _injetar_legenda(
     js_tooltip = _ler_template("tooltip.js")
     js_filtro = _ler_template("filtro_sidebar.js")
     js_caminhos = _ler_template("caminhos_legenda.js")
+    js_graficos = _ler_template("graficos_dinamicos.js")
     legenda = _ler_template("legenda.html").format(
         region_rows=region_rows,
         path1_color=path1_color,
@@ -334,14 +311,20 @@ def _injetar_legenda(
         "defaultEdge": {"color": default_edge, "width": 1},
         "highlightWidth": highlight_width,
     })
+    graficos_config = json.dumps({
+        "nodes": chart_data,
+        "regionColors": region_colors,
+    })
 
     legend_html = (
         f"<style>\n{css}\n</style>\n"
         f"{legenda}\n"
         f"<script>window.CAMINHOS_OBRIGATORIOS = {caminhos_config};</script>\n"
+        f"<script>window.GRAFICOS_DINAMICOS = {graficos_config};</script>\n"
         f"<script>\n{js_tooltip}\n</script>\n"
         f"<script>\n{js_filtro}\n</script>\n"
-        f"<script>\n{js_caminhos}\n</script>"
+        f"<script>\n{js_caminhos}\n</script>\n"
+        f"<script>\n{js_graficos}\n</script>"
     )
 
     html = html_path.read_text(encoding="utf-8")
@@ -489,7 +472,16 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
     _injetar_legenda(
         html_path, caminho_rec_poa, caminho_mao_gru,
         path1_edges, path2_edges,
-        REGION_COLORS, PATH1_COLOR, PATH2_COLOR, DEFAULT_EDGE,
+        REGION_COLORS,
+        [
+            {
+                "iata": d["aeroporto"],
+                "grau": d["grau"],
+                "regiao": grafo.nodes[d["aeroporto"]].regiao,
+            }
+            for d in ego_data
+        ],
+        PATH1_COLOR, PATH2_COLOR, DEFAULT_EDGE,
     )
 
     return html_path

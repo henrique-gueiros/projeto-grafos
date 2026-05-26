@@ -52,7 +52,7 @@ html, body {
   left: 0;
   top: 0;
   height: 100vh;
-  width: 248px;
+  width: 360px;
   background: #1a1a2a;
   border-right: 1px solid #2e2e42;
   z-index: 10000;
@@ -88,8 +88,8 @@ html, body {
 #filter-menu {
   background: transparent !important;
   border: none !important;
-  padding: 12px 14px 16px !important;
-  flex: 1;
+  padding: 12px 14px 8px !important;
+  flex: 0 0 auto;
 }
 #filter-menu .row {
   display: flex;
@@ -270,6 +270,49 @@ body .ts-dropdown .option:hover {
 
 #leg footer { font-size: 10px; color: #666; margin-top: 9px;
   border-top: 1px solid #2e2e42; padding-top: 6px; }
+
+#graficos-dinamicos {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 14px 16px;
+  color: #ddd;
+}
+#graficos-dinamicos .charts-title {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 2px 0 8px;
+  border-bottom: 1px solid #2e2e42;
+  padding-bottom: 6px;
+}
+#graficos-dinamicos h3,
+#graficos-dinamicos h4 {
+  margin: 0;
+  color: #fff;
+  font-weight: 600;
+}
+#graficos-dinamicos h3 { font-size: 13px; }
+#graficos-dinamicos h4 { font-size: 12px; margin-bottom: 6px; }
+#charts-region-label {
+  color: #8a8a9a;
+  font-size: 10px;
+  text-align: left;
+  line-height: 1.3;
+}
+.chart-card {
+  margin-top: 16px;
+}
+.chart-card svg {
+  display: block;
+  width: 100%;
+  height: 240px;
+  overflow: visible;
+}
+.chart-grid { stroke: rgba(255,255,255,0.08); stroke-width: 1; }
+.chart-axis { stroke: #5d5d72; stroke-width: 1; }
+.chart-label { fill: #c8c8d8; font-size: 10px; }
+.chart-value { fill: #f1f1f7; font-size: 10px; font-weight: 600; }
+.chart-empty { fill: #8a8a9a; font-size: 12px; }
 
 #grafo-tooltip {
   display: none;
