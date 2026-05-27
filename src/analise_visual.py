@@ -262,16 +262,29 @@ def _ler_template(nome: str) -> str:
     return (_TEMPLATES_DIR / nome).read_text(encoding="utf-8")
 
 
+def _edges_por_regiao(grafo: Graph, region_colors: dict[str, str]) -> dict[str, list[list[str]]]:
+    """Arestas intra-regionais por região — para destaque no grafo."""
+    reg_lookup = {iata: node.regiao for iata, node in grafo.nodes.items()}
+    by_reg: dict[str, set[tuple[str, str]]] = {r: set() for r in region_colors}
+    for edge in grafo.edges():
+        ro, rd = reg_lookup[edge.origem], reg_lookup[edge.destino]
+        if ro == rd:
+            by_reg[ro].add(tuple(sorted((edge.origem, edge.destino))))
+    return {r: [list(p) for p in sorted(s)] for r, s in by_reg.items()}
+
+
 def _injetar_legenda(
     html_path: Path,
     caminho1: list[str] | None,
     caminho2: list[str] | None,
     path1_edges: set[tuple[str, str]],
     path2_edges: set[tuple[str, str]],
+    region_edges: dict[str, list[list[str]]],
     region_colors: dict[str, str],
     chart_data: list[dict],
     path1_color: str,
     path2_color: str,
+    num_edges: int,
     default_edge: str = "#4a4a5a",
     highlight_width: int = 4,
 ) -> None:
@@ -286,28 +299,52 @@ def _injetar_legenda(
         for r, c in region_colors.items()
     )
 
+    region_toggles = "".join(
+        f'<button type="button" class="region-toggle" data-regiao="{r}" '
+        f'aria-pressed="false" style="--rc:{c}">'
+        f'<span class="region-toggle-dot"></span><span>{r}</span></button>'
+        for r, c in region_colors.items()
+    )
+    filtro_regioes = "".join(
+        f'<button type="button" class="filtro-chip" data-regiao="{r}" '
+        f'aria-pressed="false" style="--rc:{c}">'
+        f'<span class="filtro-chip-dot"></span>{r}</button>'
+        for r, c in region_colors.items()
+    )
+
     css = _ler_template("grafo.css")
     js_tooltip = _ler_template("tooltip.js")
     js_filtro = _ler_template("filtro_sidebar.js")
+    js_filtro_simples = _ler_template("filtro_simples.js")
     js_caminhos = _ler_template("caminhos_legenda.js")
     js_graficos = _ler_template("graficos_dinamicos.js")
+    js_controls = _ler_template("graph_controls.js")
+    num_nodes = len(chart_data)
     legenda = _ler_template("legenda.html").format(
         region_rows=region_rows,
+        region_toggles=region_toggles,
+        filtro_regioes=filtro_regioes,
         path1_color=path1_color,
         path2_color=path2_color,
         c1_str=c1_str,
         c2_str=c2_str,
+        num_nodes=num_nodes,
+        num_edges=num_edges,
     )
 
     caminhos_config = json.dumps({
         "path1": {
             "color": path1_color,
             "edges": [list(pair) for pair in sorted(path1_edges)],
+            "nodes": caminho1 or [],
         },
         "path2": {
             "color": path2_color,
             "edges": [list(pair) for pair in sorted(path2_edges)],
+            "nodes": caminho2 or [],
         },
+        "regions": region_edges,
+        "regionColors": region_colors,
         "defaultEdge": {"color": default_edge, "width": 1},
         "highlightWidth": highlight_width,
     })
@@ -315,16 +352,26 @@ def _injetar_legenda(
         "nodes": chart_data,
         "regionColors": region_colors,
     })
+    filtros_config = json.dumps({
+        "totalNodes": num_nodes,
+        "totalEdges": num_edges,
+    })
 
     legend_html = (
+        '<script>try{var t=localStorage.getItem("grafo-theme");'
+        'if(t==="light")document.documentElement.setAttribute("data-theme","light");'
+        '}catch(e){}</script>\n'
         f"<style>\n{css}\n</style>\n"
         f"{legenda}\n"
         f"<script>window.CAMINHOS_OBRIGATORIOS = {caminhos_config};</script>\n"
         f"<script>window.GRAFICOS_DINAMICOS = {graficos_config};</script>\n"
+        f"<script>window.GRAFO_FILTROS = {filtros_config};</script>\n"
         f"<script>\n{js_tooltip}\n</script>\n"
         f"<script>\n{js_filtro}\n</script>\n"
+        f"<script>\n{js_filtro_simples}\n</script>\n"
         f"<script>\n{js_caminhos}\n</script>\n"
-        f"<script>\n{js_graficos}\n</script>"
+        f"<script>\n{js_graficos}\n</script>\n"
+        f"<script>\n{js_controls}\n</script>"
     )
 
     html = html_path.read_text(encoding="utf-8")
@@ -380,13 +427,14 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
     PATH1_COLOR = "#ff4d4d"
     PATH2_COLOR = "#00e5ff"
     DEFAULT_EDGE = "#4a4a5a"
+    region_edges = _edges_por_regiao(grafo, REGION_COLORS)
 
     net = Network(
         height="820px",
         width="100%",
         bgcolor="#0f0f1a",
         font_color="#e0e0e0",
-        filter_menu=True,
+        filter_menu=False,
         select_menu=False,
         notebook=False,
         cdn_resources="in_line",
@@ -444,6 +492,7 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
             color={"color": DEFAULT_EDGE, "highlight": "#ffffff"},
             width=1,
             tooltipHtml=edge_tooltip,
+            tipo=edge.tipo_conexao,
         )
 
     net.set_options(json.dumps({
@@ -472,6 +521,7 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
     _injetar_legenda(
         html_path, caminho_rec_poa, caminho_mao_gru,
         path1_edges, path2_edges,
+        region_edges,
         REGION_COLORS,
         [
             {
@@ -481,7 +531,9 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
             }
             for d in ego_data
         ],
-        PATH1_COLOR, PATH2_COLOR, DEFAULT_EDGE,
+        PATH1_COLOR, PATH2_COLOR,
+        sum(1 for _ in grafo.edges()),
+        DEFAULT_EDGE,
     )
 
     return html_path

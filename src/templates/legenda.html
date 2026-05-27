@@ -2,6 +2,19 @@
   <span></span><span></span><span></span>
 </button>
 
+<div id="top-toolbar" role="toolbar" aria-label="Preferências">
+  <button type="button" class="toolbar-btn" id="btn-theme" title="Alternar tema claro/escuro">Tema</button>
+</div>
+
+<div id="graph-controls" role="toolbar" aria-label="Controles do grafo">
+  <button type="button" class="graph-ctrl-btn" id="btn-fit" title="Centralizar grafo (0)">
+    <span class="btn-label">Centralizar</span>
+  </button>
+  <button type="button" class="graph-ctrl-btn" id="btn-physics" title="Pausar física (Espaço)">
+    <span class="btn-label">Pausar</span>
+  </button>
+</div>
+
 <div id="leg">
   <h3>&#9992;&nbsp;Rede de Aeroportos — Brasil</h3>
 
@@ -13,6 +26,7 @@
   <details open>
     <summary>Caminhos obrigatórios</summary>
     <div style="margin-top:5px">
+      <p class="leg-hint">Clique para destacar e isolar a rota no grafo.</p>
       <button
         type="button"
         class="path-toggle"
@@ -39,11 +53,42 @@
     </div>
   </details>
 
+  <details>
+    <summary>Conexões por região</summary>
+    <div style="margin-top:5px">
+      <p class="leg-hint">Destaca ligações dentro de cada região.</p>
+      <div class="region-toggles-grid">{region_toggles}</div>
+    </div>
+  </details>
+
   <footer>
     Passe o mouse sobre nós/arestas para detalhes.<br>
-    Clique nos caminhos acima para destacá-los no grafo.<br>
-    Use o botão &#9776; à esquerda para abrir os filtros.
+    Use &#9776; à esquerda para filtros · <b>0</b> centraliza · <b>Espaço</b> pausa física.<br>
+    <button type="button" id="btn-clear-highlights" class="leg-link-btn">Limpar destaques</button>
+    ·
+    <button type="button" id="btn-clear-all" class="leg-link-btn">Limpar tudo</button>
   </footer>
+</div>
+
+<div id="filtro-simples" aria-label="Filtros simplificados">
+  <p id="filter-stats" class="filter-stats">Mostrando {num_nodes} aeroportos · {num_edges} ligações</p>
+  <p class="filtro-intro">Filtre por região ou tipo de ligação. Clique de novo para desfazer.</p>
+
+  <div class="filtro-block">
+    <span class="filtro-label">Região dos aeroportos</span>
+    <div class="filtro-chips" id="filtro-regioes">{filtro_regioes}</div>
+  </div>
+
+  <div class="filtro-block">
+    <span class="filtro-label">Tipo de ligação</span>
+    <div class="filtro-chips" id="filtro-tipos">
+      <button type="button" class="filtro-chip" data-tipo="regional" aria-pressed="false">Regional</button>
+      <button type="button" class="filtro-chip" data-tipo="hub" aria-pressed="false">Hub</button>
+      <button type="button" class="filtro-chip" data-tipo="hub-hub" aria-pressed="false">Hub ↔ Hub</button>
+    </div>
+  </div>
+
+  <button type="button" id="btn-limpar-filtros" class="btn-limpar">Limpar filtros</button>
 </div>
 
 <section id="graficos-dinamicos" aria-label="Gráficos dinâmicos do filtro atual">

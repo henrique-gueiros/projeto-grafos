@@ -226,11 +226,12 @@
     }
 
     document.addEventListener("click", function (event) {
-      if (event.target.closest("#filter-menu .btn")) scheduleRender();
+      if (event.target.closest("#filtro-simples .filtro-chip") ||
+          event.target.closest("#btn-limpar-filtros")) {
+        scheduleRender();
+      }
     });
-    document.addEventListener("change", function (event) {
-      if (event.target.closest("#filter-menu")) scheduleRender();
-    });
+    document.addEventListener("grafo-filtro-change", scheduleRender);
   }
 
   if (document.readyState === "loading") {
