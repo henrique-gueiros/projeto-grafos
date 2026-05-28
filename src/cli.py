@@ -75,6 +75,13 @@ def _cmd_viz(root: Path | None) -> int:
     return 0
 
 
+def _cmd_parte2(root: Path | None) -> int:
+    from src.parte2 import solve_parte2
+
+    solve_parte2(root=root, verbose=True)
+    return 0
+
+
 def _cmd_analise(root: Path | None) -> int:
     from src.graphs.graph import graph_from_csv_files
     from src.analise_visual import gerar_analise_avd
@@ -152,6 +159,15 @@ def main(argv: list[str] | None = None) -> int:
         help="Req 9: gera apenas out/grafo_interativo.html (pyvis)",
     )
 
+    # --- parte2 ---
+    subparsers.add_parser(
+        "parte2",
+        help=(
+            "Parte 2: executa BFS/DFS/Dijkstra/Bellman-Ford sobre o grafo NBA, "
+            "gera visualizações e out/parte2_report.json"
+        ),
+    )
+
     # --- analise ---
     subparsers.add_parser(
         "analise",
@@ -168,6 +184,7 @@ def main(argv: list[str] | None = None) -> int:
         "distancias": _cmd_distancias,
         "viz": _cmd_viz,
         "interativo": _cmd_interativo,
+        "parte2": _cmd_parte2,
         "analise": _cmd_analise,
     }
     return dispatch[args.cmd](root)
