@@ -136,12 +136,17 @@ def get_graph_data() -> dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
+    from src.metricas import calc_ego
+    ego_map = {e["aeroporto"]: e for e in calc_ego(grafo)}
+
     nodes = [
         {
             "id": iata,
             "label": iata,
             "cidade": node.cidade,
             "regiao": node.regiao,
+            "grau": ego_map.get(iata, {}).get("grau", 0),
+            "densidade_ego": ego_map.get(iata, {}).get("densidade_ego", 0.0),
         }
         for iata, node in grafo.nodes.items()
     ]

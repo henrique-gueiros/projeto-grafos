@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Network } from 'vis-network'
 import { DataSet } from 'vis-data'
 
@@ -44,6 +44,9 @@ const GraphViewer = forwardRef(function GraphViewer(
   const networkRef = useRef(null)
   const nodesDS = useRef(null)
   const edgesDS = useRef(null)
+  const [tooltip, setTooltip] = useState(null)
+  const tooltipPosRef = useRef({ x: 0, y: 0 })
+  const tooltipElRef = useRef(null)
 
   useImperativeHandle(ref, () => ({
     fit() {
@@ -56,12 +59,14 @@ const GraphViewer = forwardRef(function GraphViewer(
   useEffect(() => {
     if (!containerRef.current || !data) return
 
+    const nodeById = Object.fromEntries(data.nodes.map((n) => [n.id, n]))
+    const edgeById = Object.fromEntries(data.edges.map((e) => [e.id, e]))
+
     const vNodes = new DataSet(
       data.nodes.map((n) => ({
         id: n.id,
         label: n.id,
         group: n.regiao,
-        title: `<b>${n.id}</b> · ${n.cidade}<br/>Regiao: <b>${n.regiao}</b>`,
         color: {
           background: REGION_HEX[n.regiao] ?? '#64748b',
           border: '#0f172a',
@@ -79,7 +84,6 @@ const GraphViewer = forwardRef(function GraphViewer(
         from: e.from,
         to: e.to,
         tipo: e.tipo,
-        title: `${e.from} - ${e.to}<br/>Peso: ${e.weight}<br/>Tipo: ${e.tipo}`,
         color: { color: CONN_COLORS[e.tipo] ?? '#475569', opacity: 1 },
         width: 1,
         smooth: { type: 'continuous', roundness: 0.2 },
@@ -105,7 +109,7 @@ const GraphViewer = forwardRef(function GraphViewer(
           },
           stabilization: { iterations: 200 },
         },
-        interaction: { hover: true, tooltipDelay: 60, navigationButtons: true },
+        interaction: { hover: true, navigationButtons: true },
       },
     )
 
@@ -114,6 +118,18 @@ const GraphViewer = forwardRef(function GraphViewer(
       onStabilized?.()
     })
 
+    network.on('hoverNode', ({ node }) => {
+      const n = nodeById[node]
+      if (n) setTooltip({ type: 'node', data: n })
+    })
+    network.on('blurNode', () => setTooltip(null))
+
+    network.on('hoverEdge', ({ edge }) => {
+      const e = edgeById[edge]
+      if (e) setTooltip({ type: 'edge', data: e })
+    })
+    network.on('blurEdge', () => setTooltip(null))
+
     networkRef.current = network
 
     return () => {
@@ -121,6 +137,7 @@ const GraphViewer = forwardRef(function GraphViewer(
       networkRef.current = null
       nodesDS.current = null
       edgesDS.current = null
+      setTooltip(null)
     }
   }, [data]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -264,7 +281,56 @@ const GraphViewer = forwardRef(function GraphViewer(
     )
   }
 
-  return <div ref={containerRef} className="w-full h-full" />
+  return (
+    <div
+      className="relative w-full h-full"
+      onMouseMove={(ev) => {
+        tooltipPosRef.current = { x: ev.clientX, y: ev.clientY }
+        if (tooltipElRef.current) {
+          const x = ev.clientX + 14
+          const y = ev.clientY - 10
+          tooltipElRef.current.style.left = x + 'px'
+          tooltipElRef.current.style.top = y + 'px'
+        }
+      }}
+    >
+      <div ref={containerRef} className="w-full h-full" />
+
+      {tooltip && (
+        <div
+          ref={tooltipElRef}
+          className="fixed z-50 pointer-events-none select-none rounded-lg px-3 py-2 text-xs shadow-xl"
+          style={{
+            left: tooltipPosRef.current.x + 14,
+            top: tooltipPosRef.current.y - 10,
+            background: '#1e293b',
+            border: '1px solid #334155',
+            color: '#e2e8f0',
+            fontFamily: 'ui-monospace, monospace',
+            minWidth: 160,
+          }}
+        >
+          {tooltip.type === 'node' ? (
+            <>
+              <p className="font-bold text-sm text-white mb-1">{tooltip.data.id}</p>
+              <p><span className="text-slate-400">Cidade:</span> {tooltip.data.cidade}</p>
+              <p><span className="text-slate-400">Regiao:</span> {tooltip.data.regiao}</p>
+              <p><span className="text-slate-400">Grau:</span> {tooltip.data.grau ?? '–'}</p>
+            </>
+          ) : (
+            <>
+              <p className="font-bold text-sm text-white mb-1">
+                {tooltip.data.from} — {tooltip.data.to}
+              </p>
+              <p><span className="text-slate-400">Tipo:</span> {tooltip.data.tipo}</p>
+              <p><span className="text-slate-400">Peso:</span> {tooltip.data.weight}</p>
+              <p className="max-w-xs text-slate-300 mt-0.5">{tooltip.data.justificativa}</p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
 })
 
 export default GraphViewer
