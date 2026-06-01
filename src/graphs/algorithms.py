@@ -9,11 +9,124 @@ Usa apenas ``heapq`` (fila de prioridade da stdlib) para Dijkstra.
 from __future__ import annotations
 
 import heapq
+from collections import deque
 from typing import Any
 
 from src.graphs.graph import Graph
 
 
+# ---------------------------------------------------------------------------
+# BFS — Busca em Largura
+# ---------------------------------------------------------------------------
+
+def bfs(grafo: Graph, origem: str) -> dict[str, Any]:
+    """
+    BFS a partir de ``origem``.
+
+    Retorna
+    -------
+    dict com:
+      - ordem_visita : list[str]
+      - distancias   : dict[str, int]  (número de arestas até a origem)
+      - predecessores: dict[str, str|None]
+      - camadas      : list[list[str]]  (camadas BFS por nível)
+    """
+    if origem not in grafo.nodes:
+        raise ValueError(f"Nó de origem não existe: '{origem}'")
+
+    dist: dict[str, int] = {origem: 0}
+    predecessores: dict[str, str | None] = {origem: None}
+    ordem_visita: list[str] = [origem]
+    fila: deque[str] = deque([origem])
+
+    while fila:
+        u = fila.popleft()
+        for vizinho, _edge in grafo.neighbors(u):
+            if vizinho not in dist:
+                dist[vizinho] = dist[u] + 1
+                predecessores[vizinho] = u
+                ordem_visita.append(vizinho)
+                fila.append(vizinho)
+
+    max_layer = max(dist.values()) if dist else 0
+    camadas: list[list[str]] = [[] for _ in range(max_layer + 1)]
+    for node, layer in dist.items():
+        camadas[layer].append(node)
+
+    return {
+        "ordem_visita": ordem_visita,
+        "distancias": dist,
+        "predecessores": predecessores,
+        "camadas": camadas,
+    }
+
+
+# ---------------------------------------------------------------------------
+# DFS — Busca em Profundidade (iterativo)
+# ---------------------------------------------------------------------------
+
+def dfs(grafo: Graph, origem: str) -> dict[str, Any]:
+    """
+    DFS iterativo a partir de ``origem`` (evita estouro de pilha em grafos grandes).
+
+    Retorna
+    -------
+    dict com:
+      - ordem_visita  : list[str]
+      - predecessores : dict[str, str|None]
+      - arestas_arvore: list[tuple[str,str]]  (tree edges)
+      - arestas_retorno: list[tuple[str,str]] (back edges — indicam ciclos)
+      - tem_ciclo     : bool
+    """
+    if origem not in grafo.nodes:
+        raise ValueError(f"Nó de origem não existe: '{origem}'")
+
+    visitado: set[str] = set()
+    ordem_visita: list[str] = []
+    predecessores: dict[str, str | None] = {origem: None}
+    arestas_arvore: list[tuple[str, str]] = []
+    arestas_retorno: list[tuple[str, str]] = []
+
+    # Pilha: (nó, índice_do_próximo_vizinho_a_processar)
+    vizinhos_cache: dict[str, list[tuple[str, Any]]] = {}
+    stack: list[tuple[str, int]] = [(origem, 0)]
+    em_pilha: set[str] = {origem}
+
+    while stack:
+        u, idx = stack[-1]
+
+        if u not in visitado:
+            visitado.add(u)
+            ordem_visita.append(u)
+            vizinhos_cache[u] = list(grafo.neighbors(u))
+
+        vizinhos = vizinhos_cache[u]
+
+        if idx < len(vizinhos):
+            vizinho, _edge = vizinhos[idx]
+            stack[-1] = (u, idx + 1)
+
+            if vizinho not in visitado:
+                predecessores[vizinho] = u
+                arestas_arvore.append((u, vizinho))
+                em_pilha.add(vizinho)
+                stack.append((vizinho, 0))
+            elif vizinho in em_pilha and predecessores.get(u) != vizinho:
+                arestas_retorno.append((u, vizinho))
+        else:
+            em_pilha.discard(u)
+            stack.pop()
+
+    return {
+        "ordem_visita": ordem_visita,
+        "predecessores": predecessores,
+        "arestas_arvore": arestas_arvore,
+        "arestas_retorno": arestas_retorno,
+        "tem_ciclo": len(arestas_retorno) > 0,
+    }
+
+
+# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 # Dijkstra — menor caminho com pesos não-negativos
 # ---------------------------------------------------------------------------
@@ -52,11 +165,17 @@ def dijkstra(
     if origem not in grafo.nodes:
         raise ValueError(f"Nó de origem não existe: {origem}")
 
+    for edge in grafo.edges():
+        if edge.peso < 0:
+            raise ValueError(
+                f"Dijkstra requer pesos >= 0; aresta {edge.origem}-{edge.destino} "
+                f"tem peso {edge.peso}"
+            )
+
     dist: dict[str, float] = {iata: float("inf") for iata in grafo.nodes}
     prev: dict[str, str | None] = {iata: None for iata in grafo.nodes}
     dist[origem] = 0.0
 
-    # Min-heap: (custo_acumulado, iata)
     heap: list[tuple[float, str]] = [(0.0, origem)]
     visitado: set[str] = set()
 

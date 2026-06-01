@@ -1,0 +1,270 @@
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import { Network } from 'vis-network'
+import { DataSet } from 'vis-data'
+
+export const REGION_HEX = {
+  Norte: '#2dd4bf',
+  Nordeste: '#fb923c',
+  Sudeste: '#818cf8',
+  Sul: '#4ade80',
+  'Centro-Oeste': '#fbbf24',
+}
+
+export const CONN_COLORS = {
+  hub: '#3b82f6',
+  regional: '#10b981',
+  'hub-hub': '#a78bfa',
+  inter_regional: '#f59e0b',
+}
+
+const LAYER_COLORS = [
+  '#f59e0b', '#3b82f6', '#10b981', '#818cf8',
+  '#fb923c', '#2dd4bf', '#f87171', '#a78bfa',
+]
+
+function edgeKey(a, b) {
+  return a < b ? `${a}|${b}` : `${b}|${a}`
+}
+
+const GraphViewer = forwardRef(function GraphViewer(
+  {
+    data,
+    filters = { regioes: [], tipos: [] },
+    pathHighlights = { path1: false, path2: false },
+    regionEdgeHL = {},
+    mandatoryPaths = null,
+    algoPath = [],
+    bfsLayers = null,
+    physicsOn = true,
+    onStabilized,
+  },
+  ref,
+) {
+  const containerRef = useRef(null)
+  const networkRef = useRef(null)
+  const nodesDS = useRef(null)
+  const edgesDS = useRef(null)
+
+  useImperativeHandle(ref, () => ({
+    fit() {
+      networkRef.current?.fit({
+        animation: { duration: 400, easingFunction: 'easeInOutQuad' },
+      })
+    },
+  }))
+
+  useEffect(() => {
+    if (!containerRef.current || !data) return
+
+    const vNodes = new DataSet(
+      data.nodes.map((n) => ({
+        id: n.id,
+        label: n.id,
+        group: n.regiao,
+        title: `<b>${n.id}</b> · ${n.cidade}<br/>Regiao: <b>${n.regiao}</b>`,
+        color: {
+          background: REGION_HEX[n.regiao] ?? '#64748b',
+          border: '#0f172a',
+          highlight: { background: '#f59e0b', border: '#d97706' },
+          hover: { background: '#fcd34d', border: '#d97706' },
+        },
+        font: { color: '#ffffff', size: 11, bold: true },
+        size: 14,
+      })),
+    )
+
+    const vEdges = new DataSet(
+      data.edges.map((e) => ({
+        id: e.id,
+        from: e.from,
+        to: e.to,
+        tipo: e.tipo,
+        title: `${e.from} - ${e.to}<br/>Peso: ${e.weight}<br/>Tipo: ${e.tipo}`,
+        color: { color: CONN_COLORS[e.tipo] ?? '#475569', opacity: 1 },
+        width: 1,
+        smooth: { type: 'continuous', roundness: 0.2 },
+      })),
+    )
+
+    nodesDS.current = vNodes
+    edgesDS.current = vEdges
+
+    const network = new Network(
+      containerRef.current,
+      { nodes: vNodes, edges: vEdges },
+      {
+        nodes: { shape: 'dot', borderWidth: 2 },
+        edges: { smooth: { type: 'continuous', roundness: 0.2 } },
+        physics: {
+          enabled: true,
+          barnesHut: {
+            gravitationalConstant: -4500,
+            centralGravity: 0.3,
+            springLength: 130,
+            springConstant: 0.04,
+          },
+          stabilization: { iterations: 200 },
+        },
+        interaction: { hover: true, tooltipDelay: 60, navigationButtons: true },
+      },
+    )
+
+    network.on('stabilizationIterationsDone', () => {
+      network.setOptions({ physics: { enabled: false } })
+      onStabilized?.()
+    })
+
+    networkRef.current = network
+
+    return () => {
+      network.destroy()
+      networkRef.current = null
+      nodesDS.current = null
+      edgesDS.current = null
+    }
+  }, [data]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    networkRef.current?.setOptions({ physics: { enabled: physicsOn } })
+  }, [physicsOn])
+
+  useEffect(() => {
+    if (!nodesDS.current || !edgesDS.current || !data) return
+
+    const { regioes, tipos } = filters
+    const { path1: p1Active, path2: p2Active } = pathHighlights
+    const anyPath = p1Active || p2Active
+    const anyRegionHL = Object.values(regionEdgeHL).some(Boolean)
+
+    const nodeMap = Object.fromEntries(data.nodes.map((n) => [n.id, n]))
+
+    let allowedByPath = null
+    if (anyPath && mandatoryPaths) {
+      allowedByPath = new Set()
+      if (p1Active) mandatoryPaths.path1?.nodes?.forEach((n) => allowedByPath.add(n))
+      if (p2Active) mandatoryPaths.path2?.nodes?.forEach((n) => allowedByPath.add(n))
+    }
+
+    const hiddenNodes = new Set()
+    const nodeLayerMap = {}
+    if (bfsLayers) {
+      bfsLayers.forEach((layer, i) => layer.forEach((n) => { nodeLayerMap[n] = i }))
+    }
+    const algoNodes = new Set(algoPath)
+
+    const nodeUpdates = data.nodes.map((n) => {
+      let hidden = false
+      if (allowedByPath) {
+        hidden = !allowedByPath.has(n.id)
+      } else if (regioes.length > 0 && !regioes.includes(n.regiao)) {
+        hidden = true
+      }
+      if (hidden) hiddenNodes.add(n.id)
+
+      let bg = REGION_HEX[n.regiao] ?? '#64748b'
+      let sz = 14
+      if (!hidden) {
+        if (algoNodes.has(n.id)) { bg = '#f59e0b'; sz = 20 }
+        else if (bfsLayers && nodeLayerMap[n.id] !== undefined) {
+          bg = LAYER_COLORS[nodeLayerMap[n.id] % LAYER_COLORS.length]
+          sz = 16
+        }
+      }
+
+      return {
+        id: n.id,
+        hidden,
+        size: sz,
+        color: {
+          background: bg,
+          border: '#0f172a',
+          highlight: { background: '#f59e0b', border: '#d97706' },
+          hover: { background: '#fcd34d', border: '#d97706' },
+        },
+      }
+    })
+
+    nodesDS.current.update(nodeUpdates)
+
+    const path1Set = new Set()
+    const path2Set = new Set()
+    mandatoryPaths?.path1?.edges?.forEach(([a, b]) => path1Set.add(edgeKey(a, b)))
+    mandatoryPaths?.path2?.edges?.forEach(([a, b]) => path2Set.add(edgeKey(a, b)))
+
+    const algoSet = new Set()
+    algoPath.forEach((n, i) => {
+      if (i < algoPath.length - 1) algoSet.add(edgeKey(n, algoPath[i + 1]))
+    })
+
+    const regionSets = {}
+    Object.keys(regionEdgeHL).forEach((regiao) => {
+      if (!regionEdgeHL[regiao]) return
+      regionSets[regiao] = new Set()
+      data.edges.forEach((e) => {
+        if (nodeMap[e.from]?.regiao === regiao && nodeMap[e.to]?.regiao === regiao) {
+          regionSets[regiao].add(edgeKey(e.from, e.to))
+        }
+      })
+    })
+
+    const edgeUpdates = data.edges.map((e) => {
+      const key = edgeKey(e.from, e.to)
+
+      if (hiddenNodes.has(e.from) || hiddenNodes.has(e.to)) {
+        return { id: e.id, hidden: true, color: { color: '#475569', opacity: 1 }, width: 1 }
+      }
+      if (!anyPath && tipos.length > 0 && !tipos.includes(e.tipo)) {
+        return { id: e.id, hidden: true, color: { color: '#475569', opacity: 1 }, width: 1 }
+      }
+
+      if (algoSet.has(key)) {
+        return { id: e.id, hidden: false, color: { color: '#f59e0b', opacity: 1 }, width: 4 }
+      }
+
+      const inP1 = p1Active && path1Set.has(key)
+      const inP2 = p2Active && path2Set.has(key)
+      if (inP1 && inP2) {
+        return { id: e.id, hidden: false, color: { color: '#ffaa00', opacity: 1 }, width: 5 }
+      }
+      if (inP1) {
+        return { id: e.id, hidden: false, color: { color: mandatoryPaths.path1.color, opacity: 1 }, width: 4 }
+      }
+      if (inP2) {
+        return { id: e.id, hidden: false, color: { color: mandatoryPaths.path2.color, opacity: 1 }, width: 4 }
+      }
+
+      if (anyRegionHL) {
+        for (const [regiao, rset] of Object.entries(regionSets)) {
+          if (rset.has(key)) {
+            return { id: e.id, hidden: false, color: { color: REGION_HEX[regiao] ?? '#64748b', opacity: 1 }, width: 3 }
+          }
+        }
+        return { id: e.id, hidden: false, color: { color: '#475569', opacity: 0.1 }, width: 1 }
+      }
+
+      if (anyPath) {
+        return { id: e.id, hidden: false, color: { color: '#475569', opacity: 0.1 }, width: 1 }
+      }
+
+      return { id: e.id, hidden: false, color: { color: CONN_COLORS[e.tipo] ?? '#475569', opacity: 1 }, width: 1 }
+    })
+
+    edgesDS.current.update(edgeUpdates)
+  }, [filters, pathHighlights, regionEdgeHL, mandatoryPaths, algoPath, bfsLayers, data]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!data) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-500 select-none">
+        <p className="text-base font-medium">Grafo nao carregado</p>
+        <p className="text-sm text-center px-8">
+          Carregue <code className="text-slate-400">aeroportos_data.csv</code> e execute{' '}
+          <b className="text-slate-300">gerar</b> pelo terminal.
+        </p>
+      </div>
+    )
+  }
+
+  return <div ref={containerRef} className="w-full h-full" />
+})
+
+export default GraphViewer

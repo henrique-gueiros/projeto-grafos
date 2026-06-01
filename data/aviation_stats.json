@@ -1,0 +1,31 @@
+{
+  "fonte": "ANAC - Anuário do Transporte Aéreo 2023 / IBGE - Contas Regionais 2022",
+  "passageiros_domesticos": [
+    { "regiao": "Sudeste",      "milhoes": 45.2, "variacao_5a_pct": 12.3 },
+    { "regiao": "Nordeste",     "milhoes": 18.7, "variacao_5a_pct":  8.1 },
+    { "regiao": "Centro-Oeste", "milhoes": 12.1, "variacao_5a_pct":  9.4 },
+    { "regiao": "Sul",          "milhoes": 10.3, "variacao_5a_pct":  7.2 },
+    { "regiao": "Norte",        "milhoes":  6.1, "variacao_5a_pct":  5.8 }
+  ],
+  "carga_aerea": [
+    { "regiao": "Sudeste",      "mil_ton": 682.4 },
+    { "regiao": "Centro-Oeste", "mil_ton":  94.7 },
+    { "regiao": "Sul",          "mil_ton":  71.2 },
+    { "regiao": "Nordeste",     "mil_ton":  54.8 },
+    { "regiao": "Norte",        "mil_ton":  29.3 }
+  ],
+  "pib_conectividade": [
+    { "regiao": "Sudeste",      "pib_bilhoes": 5240, "aeroportos": 5, "voos_mil": 520 },
+    { "regiao": "Sul",          "pib_bilhoes":  992, "aeroportos": 3, "voos_mil": 108 },
+    { "regiao": "Centro-Oeste", "pib_bilhoes":  842, "aeroportos": 2, "voos_mil":  95 },
+    { "regiao": "Nordeste",     "pib_bilhoes":  698, "aeroportos": 6, "voos_mil": 187 },
+    { "regiao": "Norte",        "pib_bilhoes":  298, "aeroportos": 4, "voos_mil":  62 }
+  ],
+  "crescimento_voos_historico": [
+    { "ano": 2019, "Sudeste": 510, "Nordeste": 175, "Sul": 100, "Centro-Oeste": 88, "Norte": 58 },
+    { "ano": 2020, "Sudeste": 270, "Nordeste":  82, "Sul":  52, "Centro-Oeste": 45, "Norte": 32 },
+    { "ano": 2021, "Sudeste": 390, "Nordeste": 130, "Sul":  76, "Centro-Oeste": 67, "Norte": 46 },
+    { "ano": 2022, "Sudeste": 490, "Nordeste": 170, "Sul":  98, "Centro-Oeste": 88, "Norte": 57 },
+    { "ano": 2023, "Sudeste": 520, "Nordeste": 187, "Sul": 108, "Centro-Oeste": 95, "Norte": 62 }
+  ]
+}
