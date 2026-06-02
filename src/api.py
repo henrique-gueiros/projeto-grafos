@@ -330,6 +330,175 @@ def get_caminhos_obrigatorios() -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Parte 2 — Rede de Assistências NBA (grafo dirigido)
+# ---------------------------------------------------------------------------
+
+NBA_CSV = DATA_DIR / "dataset_parte2" / "nba_graph_final.csv"
+
+# cache simples do grafo NBA (83k arestas) entre requisições
+_nba_graph_cache: dict[str, Any] = {}
+
+
+def _load_nba_graph():
+    from src.graphs.digraph import digraph_from_csv
+    if not NBA_CSV.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Dataset NBA não encontrado: {NBA_CSV}",
+        )
+    mtime = NBA_CSV.stat().st_mtime
+    if _nba_graph_cache.get("mtime") != mtime:
+        _nba_graph_cache["graph"] = digraph_from_csv(NBA_CSV)
+        _nba_graph_cache["mtime"] = mtime
+    return _nba_graph_cache["graph"]
+
+
+@app.get("/api/parte2/graph")
+def get_nba_graph() -> dict[str, Any]:
+    """Subgrafo interativo da rede NBA (mesma amostra do HTML original)."""
+    from src.parte2 import build_nba_sample
+    try:
+        g = _load_nba_graph()
+        return build_nba_sample(g)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/parte2/report")
+def get_nba_report() -> dict[str, Any]:
+    """Relatório com estatísticas e resultados dos algoritmos (parte2_report.json)."""
+    path = OUT_DIR / "parte2_report.json"
+    if not path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="parte2_report.json não encontrado. Execute 'python -m src.cli parte2'.",
+        )
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.get("/api/parte2/stats")
+def get_nba_stats() -> dict[str, Any]:
+    """Estatísticas agregadas do grafo NBA completo para o dashboard."""
+    try:
+        g = _load_nba_graph()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    out_deg = {n: g.out_degree(n) for n in g.nodes}
+    in_deg = {n: g.in_degree(n) for n in g.nodes}
+
+    top_passadores = sorted(
+        ({"nome": n, "grau": d} for n, d in out_deg.items()),
+        key=lambda x: -x["grau"],
+    )[:15]
+    top_recebedores = sorted(
+        ({"nome": n, "grau": d} for n, d in in_deg.items()),
+        key=lambda x: -x["grau"],
+    )[:15]
+
+    def _dist(degrees: dict[str, int]) -> list[dict[str, int]]:
+        freq: dict[int, int] = {}
+        for d in degrees.values():
+            if d > 0:
+                freq[d] = freq.get(d, 0) + 1
+        return [{"grau": k, "freq": v} for k, v in sorted(freq.items())]
+
+    weights = sorted(int(e.weight) for e in g.edges())
+    n_w = len(weights)
+
+    def _pct(p: float) -> int:
+        return weights[min(n_w - 1, int(n_w * p))] if n_w else 0
+
+    # histograma de pesos em faixas (escala mais legível que log)
+    faixas = [(2, 5), (6, 10), (11, 25), (26, 50), (51, 100),
+              (101, 250), (251, 500), (501, 4000)]
+    weight_hist = []
+    for lo, hi in faixas:
+        c = sum(1 for w in weights if lo <= w <= hi)
+        label = f"{lo}–{hi}" if hi < 4000 else f"{lo}+"
+        weight_hist.append({"faixa": label, "freq": c})
+
+    return {
+        "num_nodes": g.num_nodes(),
+        "num_edges": g.num_edges(),
+        "top_passadores": top_passadores,
+        "top_recebedores": top_recebedores,
+        "out_degree_dist": _dist(out_deg),
+        "in_degree_dist": _dist(in_deg),
+        "weight_hist": weight_hist,
+        "weight_pct": {"p50": _pct(0.50), "p90": _pct(0.90), "p99": _pct(0.99)},
+    }
+
+
+@app.post("/api/parte2/algorithm")
+def run_nba_algorithm(body: dict[str, Any]) -> dict[str, Any]:
+    """Executa BFS / DFS / Dijkstra sobre o grafo dirigido NBA completo."""
+    from src.graphs import digraph_algorithms as da
+
+    alg = body.get("algorithm", "").upper()
+    origem = (body.get("source") or "").strip()
+    destino = (body.get("target") or "").strip()
+
+    try:
+        g = _load_nba_graph()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    if origem not in g.nodes:
+        raise HTTPException(status_code=400, detail=f"Jogador de origem não encontrado: '{origem}'")
+
+    if alg == "BFS":
+        order, layers, _ = da.bfs_directed(g, origem)
+        return {
+            "algorithm": "BFS",
+            "source": origem,
+            "nodes_visited": len(order),
+            "num_layers": len(layers),
+            "layers": layers,
+        }
+
+    if alg == "DFS":
+        order, _, _, _, edge_types, has_cycle = da.dfs_directed(g, origem)
+        counts = {"tree": 0, "back": 0, "forward": 0, "cross": 0}
+        for etype in edge_types.values():
+            counts[etype] += 1
+        return {
+            "algorithm": "DFS",
+            "source": origem,
+            "nodes_visited": len(order),
+            "has_cycle": has_cycle,
+            "edge_types": counts,
+        }
+
+    if alg == "DIJKSTRA":
+        if not destino:
+            raise HTTPException(status_code=400, detail="Dijkstra requer campo 'target'.")
+        if destino not in g.nodes:
+            raise HTTPException(status_code=400, detail=f"Jogador de destino não encontrado: '{destino}'")
+        dist, prev = da.dijkstra_directed(g, origem, target=destino)
+        custo = dist.get(destino, float("inf"))
+        caminho = da.reconstruir_caminho_di(prev, origem, destino) if custo < float("inf") else None
+        return {
+            "algorithm": "DIJKSTRA",
+            "source": origem,
+            "target": destino,
+            "custo": round(custo, 6) if custo < float("inf") else None,
+            "caminho": caminho,
+        }
+
+    raise HTTPException(
+        status_code=400,
+        detail=f"Algoritmo inválido: '{alg}'. Use: BFS / DFS / DIJKSTRA",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Serve generated output files
 # ---------------------------------------------------------------------------
 

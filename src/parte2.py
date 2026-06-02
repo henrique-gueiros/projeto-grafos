@@ -854,18 +854,49 @@ _stats();
 </html>"""
 
 
-def _gerar_html_interativo(g, out_path: Path) -> None:
+# Tiers por grau total (saída + entrada) — compartilhado entre HTML e API
+TIER_COLORS = {
+    "S": "#ffd54f",
+    "A": "#ff8a65",
+    "B": "#4fc3f7",
+    "C": "#81c784",
+    "D": "#b39ddb",
+}
+TIER_LABELS = {
+    "S": "Lenda (total ≥ 200)",
+    "A": "Elite (100–199)",
+    "B": "Alto (50–99)",
+    "C": "Médio (20–49)",
+    "D": "Base (< 20)",
+}
+
+# Estrelas-âncora do subgrafo interativo (união dos 1-hop BFS)
+NBA_SAMPLE_STARS = ["G. Antetokounmpo", "T. Young", "G. Hill"]
+
+
+def _tier_for(total: int) -> str:
+    if total >= 200: return "S"
+    if total >= 100: return "A"
+    if total >= 50:  return "B"
+    if total >= 20:  return "C"
+    return "D"
+
+
+def build_nba_sample(g) -> dict:
     """
-    Gera visualização interativa vis.js da rede NBA.
-    Usa a união dos 1-hop BFS de G. Antetokounmpo, T. Young e G. Hill
+    Constrói o subgrafo interativo da rede NBA (mesma amostra do HTML):
+    união dos 1-hop BFS de G. Antetokounmpo, T. Young e G. Hill
     (≈163 nós conectados, ≈382 arestas reais).
+
+    Retorna um dicionário JSON-serializável com `nodes` e `edges` no formato
+    vis.js (incluindo tooltipHtml, tier, métricas) além de metadados de tier.
+    Usado tanto pelo gerador de HTML quanto pela API React.
     """
     from src.graphs.digraph_algorithms import bfs_directed
 
     # ---- Selecionar subgrafo: 1-hop de 3 estrelas principais ----
-    stars = ["G. Antetokounmpo", "T. Young", "G. Hill"]
     nodes_set: set[str] = set()
-    for s in stars:
+    for s in NBA_SAMPLE_STARS:
         _, layers, _ = bfs_directed(g, s)
         for layer in layers[:2]:
             nodes_set.update(layer)
@@ -889,29 +920,8 @@ def _gerar_html_interativo(g, out_path: Path) -> None:
                 best_w[e.source] = e.weight
                 best_partner[e.source] = e.target
 
-    # ---- Tiers ----
-    TIER_COLORS = {
-        "S": "#ffd54f",
-        "A": "#ff8a65",
-        "B": "#4fc3f7",
-        "C": "#81c784",
-        "D": "#b39ddb",
-    }
-    TIER_LABELS = {
-        "S": "Lenda (total ≥ 200)",
-        "A": "Elite (100–199)",
-        "B": "Alto (50–99)",
-        "C": "Médio (20–49)",
-        "D": "Base (< 20)",
-    }
-
     def get_tier(n: str) -> str:
-        total = out_deg[n] + in_deg[n]
-        if total >= 200: return "S"
-        if total >= 100: return "A"
-        if total >= 50:  return "B"
-        if total >= 20:  return "C"
-        return "D"
+        return _tier_for(out_deg[n] + in_deg[n])
 
     max_od = max(out_deg.values()) if out_deg else 1
 
@@ -941,10 +951,13 @@ def _gerar_html_interativo(g, out_path: Path) -> None:
             "tooltipHtml": tooltip,
             "group": tier,
             "tier": tier,
+            "tierLabel": TIER_LABELS[tier],
             "size": size,
             "value": od + id_,        # para scaling automático
             "out_degree": od,
             "in_degree": id_,
+            "best_partner": bp,
+            "best_partner_pts": bw,
             "color": {
                 "background": color,
                 "border": "#0f0f1a",
@@ -978,35 +991,61 @@ def _gerar_html_interativo(g, out_path: Path) -> None:
             "to": e.target,
             "value": e.weight,        # para scaling automático
             "width": w_norm,
+            "weight": int(e.weight),
+            "cost": round(e.cost, 6),
             "tooltipHtml": tooltip,
             "color": {"color": "#3a3a5e", "highlight": "#4fc3f7", "hover": "#6868aa", "opacity": 0.65},
             "arrows": {"to": {"enabled": True, "scaleFactor": 0.45, "type": "arrow"}},
         })
 
-    nodes_json_str = json.dumps(nodes_js, ensure_ascii=False)
-    edges_json_str = json.dumps(edges_js, ensure_ascii=False)
+    tiers_meta = [
+        {
+            "tier": t,
+            "label": TIER_LABELS[t],
+            "color": TIER_COLORS[t],
+            "count": sum(1 for n in nodes_set if get_tier(n) == t),
+        }
+        for t in ["S", "A", "B", "C", "D"]
+    ]
+
+    return {
+        "stars": list(NBA_SAMPLE_STARS),
+        "num_nodes": len(nodes_set),
+        "num_edges": len(sample_edges),
+        "nodes": nodes_js,
+        "edges": edges_js,
+        "tiers": tiers_meta,
+    }
+
+
+def _gerar_html_interativo(g, out_path: Path) -> None:
+    """
+    Gera visualização interativa vis.js da rede NBA a partir de build_nba_sample.
+    """
+    sample = build_nba_sample(g)
+
+    nodes_json_str = json.dumps(sample["nodes"], ensure_ascii=False)
+    edges_json_str = json.dumps(sample["edges"], ensure_ascii=False)
 
     # ---- Tier filter chips ----
     tier_chips = ""
-    for tier, label in TIER_LABELS.items():
-        count = sum(1 for n in nodes_set if get_tier(n) == tier)
-        color = TIER_COLORS[tier]
+    for tier in sample["tiers"]:
         tier_chips += (
-            f'<button type="button" class="filtro-chip" data-tier="{tier}" '
-            f'aria-pressed="false" style="--rc:{color}">'
-            f'<span class="chip-dot"></span>{label} ({count})</button>'
+            f'<button type="button" class="filtro-chip" data-tier="{tier["tier"]}" '
+            f'aria-pressed="false" style="--rc:{tier["color"]}">'
+            f'<span class="chip-dot"></span>{tier["label"]} ({tier["count"]})</button>'
         )
 
     # ---- Legenda ----
     leg_items = "".join(
-        f'<div class="leg-row"><div class="dot" style="background:{TIER_COLORS[t]}"></div>'
-        f'<span>{TIER_LABELS[t]}</span></div>'
-        for t in ["S", "A", "B", "C", "D"]
+        f'<div class="leg-row"><div class="dot" style="background:{tier["color"]}"></div>'
+        f'<span>{tier["label"]}</span></div>'
+        for tier in sample["tiers"]
     )
 
     # ---- Tom Select options ----
     tom_options_json = json.dumps(
-        [{"value": n, "text": n} for n in sorted(nodes_set)],
+        [{"value": n["id"], "text": n["id"]} for n in sample["nodes"]],
         ensure_ascii=False
     )
 
@@ -1018,8 +1057,8 @@ def _gerar_html_interativo(g, out_path: Path) -> None:
         .replace("___TIER_CHIPS___", tier_chips)
         .replace("___LEG_ITEMS___", leg_items)
         .replace("___TOM_OPTIONS___", tom_options_json)
-        .replace("___NODES_COUNT___", str(len(nodes_set)))
-        .replace("___EDGES_COUNT___", str(len(sample_edges)))
+        .replace("___NODES_COUNT___", str(sample["num_nodes"]))
+        .replace("___EDGES_COUNT___", str(sample["num_edges"]))
     )
 
     out_path.write_text(html, encoding="utf-8")

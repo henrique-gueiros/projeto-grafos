@@ -38,3 +38,10 @@ export const getCaminhosObrigatorios = () =>
 
 export const getAviationStats = () =>
   api.get('/data/aviation-stats').then((r) => r.data)
+
+// ---- Parte 2 — Rede NBA ----
+export const getNbaGraph = () => api.get('/parte2/graph').then((r) => r.data)
+export const getNbaReport = () => api.get('/parte2/report').then((r) => r.data)
+export const getNbaStats = () => api.get('/parte2/stats').then((r) => r.data)
+export const runNbaAlgorithm = (params) =>
+  api.post('/parte2/algorithm', params).then((r) => r.data)
