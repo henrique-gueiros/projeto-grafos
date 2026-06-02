@@ -89,6 +89,7 @@ class Graph:
         self._adjacency[edge.origem].append((edge.destino, edge))
         self._adjacency[edge.destino].append((edge.origem, edge))
 
+
     def neighbors(self, iata: str) -> Iterator[tuple[str, Edge]]:
         for neighbor_iata, edge in self._adjacency.get(iata, ()):
             yield neighbor_iata, edge

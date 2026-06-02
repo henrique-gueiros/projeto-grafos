@@ -5,6 +5,7 @@ Disciplina de Grafos — Parte 1: modelagem, métricas, algoritmos e visualizaç
 ## Requisitos
 
 - Python 3.11 ou superior
+- Node.js 18 ou superior
 - Dependências listadas em [`requirements.txt`](requirements.txt)
 
 ## Instalação
@@ -14,9 +15,10 @@ Disciplina de Grafos — Parte 1: modelagem, métricas, algoritmos e visualizaç
 git clone <url-do-repositorio>
 cd projeto-grafos
 
-# Ambiente virtual (Python 3.12 do Homebrew)
-/opt/homebrew/bin/python3.12 -m venv .venv
-source .venv/bin/activate   # ou: source activate.sh
+# Crie e ative o ambiente virtual
+python -m venv .venv
+.venv\Scripts\activate      # Windows
+source .venv/bin/activate   # Linux/macOS
 
 pip install -r requirements.txt
 ```
@@ -27,14 +29,18 @@ pip install -r requirements.txt
 projeto-grafos/
 ├── README.md
 ├── requirements.txt
+├── conftest.py                      # configuração do pytest
 ├── data/
 │   ├── aeroportos_data.csv          # nós: IATA, cidade, região
 │   ├── adjacencias_aeroportos.csv   # arestas (gerado pelo CLI)
 │   └── rotas.csv                    # pares para cálculo de distâncias
 ├── out/                             # saídas geradas (.json, .csv, .png, .html)
+│   └── .gitkeep
 ├── src/
 │   ├── cli.py                       # interface de linha de comando
 │   ├── solve.py                     # orquestração das partes 3 e 6
+│   ├── api.py                       # API FastAPI (serve o frontend React)
+│   ├── viz.py                       # ponto de entrada para visualizações
 │   ├── metricas.py                  # métricas: global, regiões, ego-redes
 │   ├── distancias.py                # cálculo de menores caminhos
 │   ├── analise_visual.py            # visualizações (Req 7, 8, 9 e 10)
@@ -42,6 +48,11 @@ projeto-grafos/
 │       ├── graph.py                 # estruturas: Node, Edge, Graph
 │       ├── algorithms.py            # BFS, DFS, Dijkstra, Bellman-Ford (impl. própria)
 │       └── io.py                    # leitura/escrita de CSV, modelo de arestas
+├── frontend/                        # aplicação React (Vite + Tailwind)
+│   ├── src/
+│   │   ├── pages/Home.jsx           # visualização interativa do grafo
+│   │   └── pages/Dashboard.jsx      # gráficos analíticos com filtros
+│   └── ...
 └── tests/
     ├── test_bfs.py
     ├── test_dfs.py
@@ -118,6 +129,24 @@ python -m src.cli analise
 | `python -m src.cli analise` | Só as visualizações exploratórias/explanatórias (Req 10) |
 
 Todos os comandos aceitam `--root PATH` para especificar a raiz do projeto manualmente.
+
+### 7. Frontend React
+
+**Terminal 1 — Backend:**
+
+```bash
+python -m uvicorn src.api:app --reload
+```
+
+**Terminal 2 — Frontend:**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Acesse `http://localhost:5173`.
 
 ---
 
@@ -196,7 +225,7 @@ peso = 1.0 + penalidade_regiao + penalidade_hub
 | Intra-regional sem hub (ex.: FOR–JPA) | **1.5** |
 | Inter-regional com hub (ex.: GRU–REC) | **2.0** |
 
-Pesos não-negativos — Bellman-Ford reservado para a Parte 2.
+Pesos não-negativos — exigência do Dijkstra (pesos negativos são rejeitados em runtime).
 
 ---
 
@@ -204,10 +233,9 @@ Pesos não-negativos — Bellman-Ford reservado para a Parte 2.
 
 Todos em [`src/graphs/algorithms.py`](src/graphs/algorithms.py), **sem uso de bibliotecas externas** para as implementações:
 
-- **Dijkstra** — menor caminho com pesos ≥ 0, usando `heapq` da stdlib
-- **BFS** — busca em largura iterativa
-- **DFS** — busca em profundidade iterativa
-- **Bellman-Ford** — menor caminho com suporte a pesos negativos (Parte 2)
+- **Dijkstra** — menor caminho com pesos ≥ 0, usando `heapq` da stdlib; rejeita pesos negativos
+- **BFS** — busca em largura iterativa; retorna camadas, distâncias e predecessores
+- **DFS** — busca em profundidade iterativa; classifica arestas em árvore/retorno e detecta ciclos
 
 ---
 
@@ -218,6 +246,7 @@ Todos em [`src/graphs/algorithms.py`](src/graphs/algorithms.py), **sem uso de bi
 | `matplotlib` | Visualizações estáticas (Req 7, 8, 10) | Permitida pelo enunciado |
 | `numpy` | Geração de paletas de cor | Permitida pelo enunciado |
 | `pyvis` | Grafo interativo HTML (Req 9) | Permitida pelo enunciado |
+| `fastapi` + `uvicorn` | API REST para o frontend React | Permitida pelo enunciado |
 | `heapq` | Fila de prioridade no Dijkstra | Stdlib Python |
 
 `networkx`, `igraph` e `graph-tool` **não são utilizados** — proibidos pelo enunciado para implementação de algoritmos.
@@ -227,12 +256,11 @@ Todos em [`src/graphs/algorithms.py`](src/graphs/algorithms.py), **sem uso de bi
 ## Testes
 
 ```bash
-python -m pytest tests/
+python -m pytest tests/ -v
 ```
 
 | Arquivo de teste | Cobre |
 |---|---|
-| `tests/test_dijkstra.py` | Dijkstra: caminho mínimo, grafo desconectado, nó inválido |
-| `tests/test_bfs.py` | BFS: ordem de visita, grafo desconectado |
-| `tests/test_dfs.py` | DFS: ordem de visita, grafo desconectado |
-| `tests/test_bellman_ford.py` | Bellman-Ford: pesos negativos, ciclo negativo |
+| `tests/test_bfs.py` | Camadas corretas, distâncias, predecessores, source inválido |
+| `tests/test_dfs.py` | Detecção de ciclo, classificação de arestas (árvore/retorno), source inválido |
+| `tests/test_dijkstra.py` | Caminho mínimo, grafo desconectado, rejeição de peso negativo, source inválido |
