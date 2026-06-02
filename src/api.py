@@ -350,7 +350,20 @@ def _load_nba_graph():
     if _nba_graph_cache.get("mtime") != mtime:
         _nba_graph_cache["graph"] = digraph_from_csv(NBA_CSV)
         _nba_graph_cache["mtime"] = mtime
+        _nba_graph_cache.pop("sub", None)  # invalida subgrafo
     return _nba_graph_cache["graph"]
+
+
+def _load_nba_sample_subgraph():
+    """Subgrafo induzido pela amostra exibida (≈163 nós) — usado nos algoritmos
+    da tela do grafo, para que a animação ocorra dentro da rede visível."""
+    from src.parte2 import build_nba_sample
+    g = _load_nba_graph()
+    if "sub" not in _nba_graph_cache:
+        sample = build_nba_sample(g)
+        ids = {n["id"] for n in sample["nodes"]}
+        _nba_graph_cache["sub"] = g.induced_subgraph(ids)
+    return _nba_graph_cache["sub"]
 
 
 @app.get("/api/parte2/graph")
@@ -436,7 +449,8 @@ def get_nba_stats() -> dict[str, Any]:
 
 @app.post("/api/parte2/algorithm")
 def run_nba_algorithm(body: dict[str, Any]) -> dict[str, Any]:
-    """Executa BFS / DFS / Dijkstra sobre o grafo dirigido NBA completo."""
+    """Executa BFS / DFS / Dijkstra / Bellman-Ford sobre a subrede NBA exibida
+    (subgrafo induzido pela amostra), para que o percurso seja animável na tela."""
     from src.graphs import digraph_algorithms as da
 
     alg = body.get("algorithm", "").upper()
@@ -444,43 +458,53 @@ def run_nba_algorithm(body: dict[str, Any]) -> dict[str, Any]:
     destino = (body.get("target") or "").strip()
 
     try:
-        g = _load_nba_graph()
+        g = _load_nba_sample_subgraph()
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
     if origem not in g.nodes:
-        raise HTTPException(status_code=400, detail=f"Jogador de origem não encontrado: '{origem}'")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Jogador '{origem}' não está na subrede exibida. Escolha um dos jogadores visíveis.",
+        )
+
+    def _tree_edges(order: list[str], parent: dict[str, str | None]) -> list[list[str]]:
+        return [[parent[n], n] for n in order if parent.get(n) is not None]
 
     if alg == "BFS":
-        order, layers, _ = da.bfs_directed(g, origem)
+        order, layers, parent = da.bfs_directed(g, origem)
         return {
             "algorithm": "BFS",
             "source": origem,
             "nodes_visited": len(order),
             "num_layers": len(layers),
             "layers": layers,
+            "tree_edges": _tree_edges(order, parent),
         }
 
     if alg == "DFS":
-        order, _, _, _, edge_types, has_cycle = da.dfs_directed(g, origem)
+        order, _, _, parent, edge_types, has_cycle = da.dfs_directed(g, origem)
         counts = {"tree": 0, "back": 0, "forward": 0, "cross": 0}
         for etype in edge_types.values():
             counts[etype] += 1
+        back_edges = [list(k) for k, v in edge_types.items() if v == "back"]
         return {
             "algorithm": "DFS",
             "source": origem,
             "nodes_visited": len(order),
             "has_cycle": has_cycle,
             "edge_types": counts,
+            "tree_edges": _tree_edges(order, parent),
+            "back_edges": back_edges,
         }
 
     if alg == "DIJKSTRA":
         if not destino:
             raise HTTPException(status_code=400, detail="Dijkstra requer campo 'target'.")
         if destino not in g.nodes:
-            raise HTTPException(status_code=400, detail=f"Jogador de destino não encontrado: '{destino}'")
+            raise HTTPException(status_code=400, detail=f"Jogador de destino não encontrado na subrede: '{destino}'")
         dist, prev = da.dijkstra_directed(g, origem, target=destino)
         custo = dist.get(destino, float("inf"))
         caminho = da.reconstruir_caminho_di(prev, origem, destino) if custo < float("inf") else None
@@ -492,9 +516,27 @@ def run_nba_algorithm(body: dict[str, Any]) -> dict[str, Any]:
             "caminho": caminho,
         }
 
+    if alg in ("BELLMAN-FORD", "BELLMAN_FORD", "BELLMANFORD", "BF"):
+        if not destino:
+            raise HTTPException(status_code=400, detail="Bellman-Ford requer campo 'target'.")
+        if destino not in g.nodes:
+            raise HTTPException(status_code=400, detail=f"Jogador de destino não encontrado na subrede: '{destino}'")
+        # usa edge.cost (positivo); a parada antecipada converge em O(diâmetro) passos
+        dist, prev, neg_cycle, _ = da.bellman_ford(g, origem)
+        custo = dist.get(destino, float("inf"))
+        caminho = da.reconstruir_caminho_di(prev, origem, destino) if custo < float("inf") else None
+        return {
+            "algorithm": "BELLMAN-FORD",
+            "source": origem,
+            "target": destino,
+            "custo": round(custo, 6) if custo < float("inf") else None,
+            "caminho": caminho,
+            "has_negative_cycle": neg_cycle,
+        }
+
     raise HTTPException(
         status_code=400,
-        detail=f"Algoritmo inválido: '{alg}'. Use: BFS / DFS / DIJKSTRA",
+        detail=f"Algoritmo inválido: '{alg}'. Use: BFS / DFS / DIJKSTRA / BELLMAN-FORD",
     )
 
 

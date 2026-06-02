@@ -33,8 +33,7 @@ const GraphViewer = forwardRef(function GraphViewer(
     pathHighlights = { path1: false, path2: false },
     regionEdgeHL = {},
     mandatoryPaths = null,
-    algoPath = [],
-    bfsLayers = null,
+    animation = null, // { startNode, edges: [[from,to],...], accent }
     physicsOn = true,
     onStabilized,
   },
@@ -47,6 +46,26 @@ const GraphViewer = forwardRef(function GraphViewer(
   const [tooltip, setTooltip] = useState(null)
   const tooltipPosRef = useRef({ x: 0, y: 0 })
   const tooltipElRef = useRef(null)
+
+  // animação de percurso de algoritmo
+  const [animStep, setAnimStep] = useState(0)
+  const animTimerRef = useRef(null)
+
+  useEffect(() => {
+    if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = null }
+    if (!animation) { setAnimStep(0); return }
+    setAnimStep(0)
+    const total = animation.edges?.length ?? 0
+    if (total === 0) return
+    const stepMs = Math.max(35, Math.min(320, Math.round(3500 / total)))
+    animTimerRef.current = setInterval(() => {
+      setAnimStep((s) => {
+        if (s >= total) { clearInterval(animTimerRef.current); animTimerRef.current = null; return s }
+        return s + 1
+      })
+    }, stepMs)
+    return () => { if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = null } }
+  }, [animation])
 
   useImperativeHandle(ref, () => ({
     fit() {
@@ -148,6 +167,48 @@ const GraphViewer = forwardRef(function GraphViewer(
   useEffect(() => {
     if (!nodesDS.current || !edgesDS.current || !data) return
 
+    // ---- Modo animação: dim total + revelação progressiva do percurso ----
+    if (animation) {
+      const accent = animation.accent ?? '#f59e0b'
+      const edges = animation.edges ?? []
+      const revealedNodes = new Set(animation.startNode ? [animation.startNode] : [])
+      const revealedEdges = new Set()
+      for (let i = 0; i < Math.min(animStep, edges.length); i++) {
+        const [a, b] = edges[i]
+        revealedNodes.add(a); revealedNodes.add(b)
+        revealedEdges.add(edgeKey(a, b))
+      }
+      const newest = animStep > 0 && animStep <= edges.length ? edges[animStep - 1]?.[1] : animation.startNode
+
+      nodesDS.current.update(data.nodes.map((n) => {
+        const on = revealedNodes.has(n.id)
+        const isNewest = n.id === newest
+        return {
+          id: n.id,
+          hidden: false,
+          opacity: on ? 1 : 0.12,
+          size: isNewest ? 22 : on ? 17 : 13,
+          color: {
+            background: REGION_HEX[n.regiao] ?? '#64748b',
+            border: on ? accent : '#0f172a',
+            highlight: { background: accent, border: '#ffffff' },
+            hover: { background: accent, border: '#ffffff' },
+          },
+        }
+      }))
+
+      edgesDS.current.update(data.edges.map((e) => {
+        const on = revealedEdges.has(edgeKey(e.from, e.to))
+        return {
+          id: e.id,
+          hidden: false,
+          color: on ? { color: accent, opacity: 1 } : { color: '#475569', opacity: 0.06 },
+          width: on ? 4 : 1,
+        }
+      }))
+      return
+    }
+
     const { regioes, tipos } = filters
     const { path1: p1Active, path2: p2Active } = pathHighlights
     const anyPath = p1Active || p2Active
@@ -163,11 +224,6 @@ const GraphViewer = forwardRef(function GraphViewer(
     }
 
     const hiddenNodes = new Set()
-    const nodeLayerMap = {}
-    if (bfsLayers) {
-      bfsLayers.forEach((layer, i) => layer.forEach((n) => { nodeLayerMap[n] = i }))
-    }
-    const algoNodes = new Set(algoPath)
 
     const nodeUpdates = data.nodes.map((n) => {
       let hidden = false
@@ -178,22 +234,13 @@ const GraphViewer = forwardRef(function GraphViewer(
       }
       if (hidden) hiddenNodes.add(n.id)
 
-      let bg = REGION_HEX[n.regiao] ?? '#64748b'
-      let sz = 14
-      if (!hidden) {
-        if (algoNodes.has(n.id)) { bg = '#f59e0b'; sz = 20 }
-        else if (bfsLayers && nodeLayerMap[n.id] !== undefined) {
-          bg = LAYER_COLORS[nodeLayerMap[n.id] % LAYER_COLORS.length]
-          sz = 16
-        }
-      }
-
       return {
         id: n.id,
         hidden,
-        size: sz,
+        opacity: 1,
+        size: 14,
         color: {
-          background: bg,
+          background: REGION_HEX[n.regiao] ?? '#64748b',
           border: '#0f172a',
           highlight: { background: '#f59e0b', border: '#d97706' },
           hover: { background: '#fcd34d', border: '#d97706' },
@@ -207,11 +254,6 @@ const GraphViewer = forwardRef(function GraphViewer(
     const path2Set = new Set()
     mandatoryPaths?.path1?.edges?.forEach(([a, b]) => path1Set.add(edgeKey(a, b)))
     mandatoryPaths?.path2?.edges?.forEach(([a, b]) => path2Set.add(edgeKey(a, b)))
-
-    const algoSet = new Set()
-    algoPath.forEach((n, i) => {
-      if (i < algoPath.length - 1) algoSet.add(edgeKey(n, algoPath[i + 1]))
-    })
 
     const regionSets = {}
     Object.keys(regionEdgeHL).forEach((regiao) => {
@@ -232,10 +274,6 @@ const GraphViewer = forwardRef(function GraphViewer(
       }
       if (!anyPath && tipos.length > 0 && !tipos.includes(e.tipo)) {
         return { id: e.id, hidden: true, color: { color: '#475569', opacity: 1 }, width: 1 }
-      }
-
-      if (algoSet.has(key)) {
-        return { id: e.id, hidden: false, color: { color: '#f59e0b', opacity: 1 }, width: 4 }
       }
 
       const inP1 = p1Active && path1Set.has(key)
@@ -267,7 +305,7 @@ const GraphViewer = forwardRef(function GraphViewer(
     })
 
     edgesDS.current.update(edgeUpdates)
-  }, [filters, pathHighlights, regionEdgeHL, mandatoryPaths, algoPath, bfsLayers, data]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filters, pathHighlights, regionEdgeHL, mandatoryPaths, animation, animStep, data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!data) {
     return (
