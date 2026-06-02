@@ -3,6 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { getNbaGraph, runNbaAlgorithm } from '../api.js'
 import NbaGraphViewer from '../components/NbaGraphViewer.jsx'
 
+// quadra de basquete desenhada em SVG (fundo temático do grafo)
+const COURT = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 500" preserveAspectRatio="xMidYMid slice">` +
+  `<g fill="none" stroke="#ffd9a0" stroke-width="3" stroke-linejoin="round">` +
+  `<rect x="14" y="14" width="912" height="472" rx="6"/>` +
+  `<line x1="470" y1="14" x2="470" y2="486"/>` +
+  `<circle cx="470" cy="250" r="64"/>` +
+  `<rect x="14" y="170" width="160" height="160"/>` +
+  `<circle cx="174" cy="250" r="60"/>` +
+  `<rect x="766" y="170" width="160" height="160"/>` +
+  `<circle cx="766" cy="250" r="60"/>` +
+  `<path d="M14,42 A248,248 0 0 1 14,458"/>` +
+  `<path d="M926,42 A248,248 0 0 0 926,458"/>` +
+  `<circle cx="60" cy="250" r="9"/>` +
+  `<circle cx="880" cy="250" r="9"/>` +
+  `</g>` +
+  `<circle cx="470" cy="250" r="7" fill="#ffd9a0"/>` +
+  `</svg>`,
+)
+
 function Toast({ msg, type, onClose }) {
   const cls = {
     success: 'bg-emerald-800 border-emerald-600',
@@ -27,12 +47,19 @@ function Spinner() {
 
 function AlgoResult({ result }) {
   if (!result) return null
-  if (result.algorithm === 'DIJKSTRA') return (
+  if (result.algorithm === 'DIJKSTRA' || result.algorithm === 'BELLMAN-FORD') return (
     <div className="p-2 rounded bg-slate-900 border border-slate-700 text-xs space-y-1">
       <p className="text-slate-400">Custo: <span className="text-amber-400 font-bold">{result.custo ?? 'sem caminho'}</span></p>
       <p className="text-slate-400 break-words">
         Caminho: <span className="text-slate-200">{result.caminho?.join(' → ') ?? 'sem caminho'}</span>
       </p>
+      {result.algorithm === 'BELLMAN-FORD' && (
+        <p className="text-slate-400">
+          Ciclo negativo: <span className={result.has_negative_cycle ? 'text-red-400' : 'text-emerald-400'}>
+            {result.has_negative_cycle ? 'detectado' : 'não'}
+          </span>
+        </p>
+      )}
     </div>
   )
   if (result.algorithm === 'BFS') return (
@@ -73,9 +100,9 @@ export default function NbaGraph() {
   const [physicsOn, setPhysicsOn] = useState(true)
   const [selectedNode, setSelectedNode] = useState(null)
 
-  const [alg, setAlg] = useState('DIJKSTRA')
   const [source, setSource] = useState('')
   const [target, setTarget] = useState('')
+  const [activeAlg, setActiveAlg] = useState(null)
   const [algoResult, setAlgoResult] = useState(null)
   const [algoHighlight, setAlgoHighlight] = useState(null)
 
@@ -101,25 +128,32 @@ export default function NbaGraph() {
 
   const handleSelect = useCallback((node) => {
     setSelectedNode(node)
-    if (node) setAlgoHighlight(null) // clicar num nó tem prioridade sobre destaque de algoritmo
+    if (node) { setAlgoHighlight(null); setActiveAlg(null) } // clicar num nó tem prioridade
   }, [])
 
   const handleSearch = (val) => {
     setSearch(val)
     if (players.includes(val)) {
       setAlgoHighlight(null)
+      setActiveAlg(null)
       graphRef.current?.focusOn(val)
     }
   }
 
-  const handleRunAlgo = async () => {
+  const NEEDS_TARGET = ['DIJKSTRA', 'BELLMAN-FORD']
+
+  const runAlgo = async (algName) => {
     if (!source.trim()) { showToast('Informe o jogador de origem.', 'error'); return }
-    setLoading(true)
+    if (NEEDS_TARGET.includes(algName) && !target.trim()) {
+      showToast(`${algName} precisa de um jogador de destino.`, 'error'); return
+    }
+    setActiveAlg(algName)
+    setLoading(algName)
     try {
       const result = await runNbaAlgorithm({
-        algorithm: alg,
+        algorithm: algName,
         source: source.trim(),
-        target: alg === 'DIJKSTRA' ? target.trim() : undefined,
+        target: NEEDS_TARGET.includes(algName) ? target.trim() : undefined,
       })
       setAlgoResult(result)
       graphRef.current?.clearSelection()
@@ -129,13 +163,13 @@ export default function NbaGraph() {
         const layerMap = {}
         result.layers.forEach((layer, i) => layer.forEach((n) => { layerMap[n] = i }))
         setAlgoHighlight({ type: 'BFS', layerMap })
-      } else if (result.algorithm === 'DIJKSTRA' && result.caminho) {
+      } else if ((result.algorithm === 'DIJKSTRA' || result.algorithm === 'BELLMAN-FORD') && result.caminho) {
         const pathNodes = new Set(result.caminho)
         const pathEdges = new Set()
         for (let i = 0; i < result.caminho.length - 1; i++) {
           pathEdges.add(`${result.caminho[i]}>${result.caminho[i + 1]}`)
         }
-        setAlgoHighlight({ type: 'DIJKSTRA', pathNodes, pathEdges })
+        setAlgoHighlight({ type: 'PATH', pathNodes, pathEdges })
       } else {
         setAlgoHighlight(null) // DFS / sem caminho: apenas resultado textual
       }
@@ -149,6 +183,7 @@ export default function NbaGraph() {
   const clearAll = () => {
     setActiveTiers([])
     setShowAllLabels(false)
+    setActiveAlg(null)
     setAlgoResult(null)
     setAlgoHighlight(null)
     setSelectedNode(null)
@@ -174,6 +209,27 @@ export default function NbaGraph() {
       <div className="flex flex-1 overflow-hidden">
 
         <main className="flex-1 relative overflow-hidden">
+          {/* fundo temático NBA — arena escura + linhas de quadra */}
+          <div
+            className="absolute inset-0 z-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse 80% 80% at 50% 45%, #1c2138 0%, #11131f 55%, #08080f 100%)' }}
+          />
+          <div
+            className="absolute inset-0 z-0 pointer-events-none"
+            style={{
+              backgroundImage: `url("${COURT}")`,
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+              opacity: 0.13,
+            }}
+          />
+          {/* leve brilho âmbar (luzes da arena) */}
+          <div
+            className="absolute inset-0 z-0 pointer-events-none"
+            style={{ background: 'radial-gradient(circle at 50% 50%, rgba(232,116,27,0.10), transparent 60%)' }}
+          />
+
+          <div className="relative z-[1] w-full h-full">
           <NbaGraphViewer
             ref={graphRef}
             data={data}
@@ -184,6 +240,7 @@ export default function NbaGraph() {
             onStabilized={() => setPhysicsOn(false)}
             onSelect={handleSelect}
           />
+          </div>
 
           {data && (
             <div className="absolute top-3 right-3 flex gap-1.5 z-10">
@@ -310,17 +367,8 @@ export default function NbaGraph() {
             <div className="border-t border-slate-700" />
 
             <section>
-              <p className="section-title">Algoritmo</p>
+              <p className="section-title">Algoritmos</p>
               <div className="space-y-1.5">
-                <select
-                  value={alg}
-                  onChange={(e) => { setAlg(e.target.value); setAlgoResult(null); setAlgoHighlight(null) }}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                >
-                  <option value="BFS">BFS</option>
-                  <option value="DFS">DFS</option>
-                  <option value="DIJKSTRA">Dijkstra</option>
-                </select>
                 <input
                   type="text"
                   placeholder="Origem (ex: G. Antetokounmpo)"
@@ -329,26 +377,42 @@ export default function NbaGraph() {
                   list="nba-players-list"
                   className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
-                {alg === 'DIJKSTRA' && (
-                  <input
-                    type="text"
-                    placeholder="Destino (ex: L. James)"
-                    value={target}
-                    onChange={(e) => setTarget(e.target.value)}
-                    list="nba-players-list"
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                  />
-                )}
-                <button
-                  onClick={handleRunAlgo}
-                  disabled={!data || loading}
-                  className="btn-primary w-full text-xs"
-                >
-                  {loading ? <Spinner /> : 'Executar'}
-                </button>
+                <input
+                  type="text"
+                  placeholder="Destino — Dijkstra / Bellman-Ford"
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value)}
+                  list="nba-players-list"
+                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                />
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: 'BFS', label: 'BFS', color: '#4fc3f7' },
+                    { id: 'DFS', label: 'DFS', color: '#81c784' },
+                    { id: 'DIJKSTRA', label: 'Dijkstra', color: '#ffb74d' },
+                    { id: 'BELLMAN-FORD', label: 'Bellman-Ford', color: '#f06292' },
+                  ].map((a) => {
+                    const on = activeAlg === a.id
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => runAlgo(a.id)}
+                        disabled={!data || loading}
+                        className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-all disabled:opacity-50
+                          ${on ? 'text-slate-900' : 'text-slate-200 hover:brightness-110'}`}
+                        style={on
+                          ? { background: a.color }
+                          : { background: `${a.color}26`, border: `1px solid ${a.color}66` }}
+                      >
+                        {loading === a.id ? <Spinner /> : a.label}
+                      </button>
+                    )
+                  })}
+                </div>
                 <p className="text-[10px] text-slate-500 leading-relaxed">
-                  Algoritmos rodam sobre o grafo completo ({data?.num_nodes ? '3520' : '…'} jogadores).
-                  O destaque no grafo aparece nos nós presentes nesta amostra.
+                  Algoritmos rodam sobre o grafo completo (3520 jogadores). Dijkstra/Bellman-Ford
+                  destacam o caminho; BFS colore por camadas; DFS mostra estatísticas. O destaque
+                  aparece nos nós presentes nesta amostra.
                 </p>
                 {algoResult && <AlgoResult result={algoResult} />}
               </div>

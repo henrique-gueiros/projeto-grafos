@@ -9,6 +9,30 @@ const REGIONS = ['Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste']
 const TIPOS = ['regional', 'hub', 'hub-hub']
 const TIPO_LABELS = { regional: 'Regional', hub: 'Hub', 'hub-hub': 'Hub-Hub' }
 
+const ALGO_ACCENT = { BFS: '#3b82f6', DFS: '#6366f1', DIJKSTRA: '#f59e0b' }
+
+// converte o resultado do algoritmo numa sequência de arestas para animação
+function buildAnimation(result) {
+  const accent = ALGO_ACCENT[result.algorithm] ?? '#f59e0b'
+  if (result.algorithm === 'BFS') {
+    const order = result.ordem_visita ?? []
+    const pred = result.predecessores ?? {}
+    const edges = []
+    order.forEach((n) => { const p = pred[n]; if (p != null) edges.push([p, n]) })
+    return { startNode: result.source ?? order[0], edges, accent }
+  }
+  if (result.algorithm === 'DFS') {
+    return { startNode: result.source, edges: result.arestas_arvore ?? [], accent }
+  }
+  if (result.algorithm === 'DIJKSTRA' && result.caminho) {
+    const c = result.caminho
+    const edges = []
+    for (let i = 0; i < c.length - 1; i++) edges.push([c[i], c[i + 1]])
+    return { startNode: c[0], edges, accent }
+  }
+  return null
+}
+
 function Toast({ msg, type, onClose }) {
   const cls = {
     success: 'bg-emerald-800 border-emerald-600',
@@ -113,12 +137,11 @@ export default function Home() {
   const [regionEdgeHL, setRegionEdgeHL] = useState({})
   const [physicsOn, setPhysicsOn] = useState(true)
 
-  const [alg, setAlg] = useState('DIJKSTRA')
   const [source, setSource] = useState('')
   const [target, setTarget] = useState('')
+  const [activeAlg, setActiveAlg] = useState(null)
   const [algoResult, setAlgoResult] = useState(null)
-  const [algoPath, setAlgoPath] = useState([])
-  const [bfsLayers, setBfsLayers] = useState(null)
+  const [animation, setAnimation] = useState(null)
 
   const [loading, setLoading] = useState({})
   const [toast, setToast] = useState(null)
@@ -167,8 +190,8 @@ export default function Home() {
   const clearAll = () => {
     clearFilters()
     clearHighlights()
-    setAlgoPath([])
-    setBfsLayers(null)
+    setAnimation(null)
+    setActiveAlg(null)
     setAlgoResult(null)
   }
 
@@ -176,24 +199,30 @@ export default function Home() {
     pathHighlights.path1 || pathHighlights.path2 || Object.values(regionEdgeHL).some(Boolean)
   const hasFilter = filters.regioes.length > 0 || filters.tipos.length > 0
 
-  const handleRunAlgo = async () => {
+  const NEEDS_TARGET = ['DIJKSTRA']
+
+  const runAlgo = async (algName) => {
     if (!source.trim()) { showToast('Informe o aeroporto de origem.', 'error'); return }
+    if (NEEDS_TARGET.includes(algName) && !target.trim()) {
+      showToast('Dijkstra precisa de um aeroporto de destino.', 'error'); return
+    }
+    setActiveAlg(algName)
     try {
-      const result = await withLoading('algo', () =>
+      const result = await withLoading(algName, () =>
         runAlgorithm({
-          algorithm: alg,
+          algorithm: algName,
           source: source.trim().toUpperCase(),
-          target: target.trim().toUpperCase() || undefined,
+          target: NEEDS_TARGET.includes(algName) ? target.trim().toUpperCase() : undefined,
         }),
       )
       setAlgoResult(result)
-      if (result.caminho) { setAlgoPath(result.caminho); setBfsLayers(null) }
-      else if (result.camadas) { setBfsLayers(result.camadas); setAlgoPath([]) }
-      else { setAlgoPath([]); setBfsLayers(null) }
+      setAnimation(buildAnimation(result))
     } catch (e) { showToast(e.message, 'error') }
   }
 
-  const clearAlgo = () => { setAlgoPath([]); setBfsLayers(null); setAlgoResult(null) }
+  const clearAlgo = () => {
+    setAnimation(null); setActiveAlg(null); setAlgoResult(null)
+  }
 
   const airports = useMemo(() => graphData?.nodes?.map((n) => n.id).sort() ?? [], [graphData])
 
@@ -225,8 +254,7 @@ export default function Home() {
             pathHighlights={pathHighlights}
             regionEdgeHL={regionEdgeHL}
             mandatoryPaths={mandatoryPaths}
-            algoPath={algoPath}
-            bfsLayers={bfsLayers}
+            animation={animation}
             physicsOn={physicsOn}
             onStabilized={() => setPhysicsOn(false)}
           />
@@ -270,17 +298,8 @@ export default function Home() {
           <div className="p-3 space-y-4">
 
             <section>
-              <p className="section-title">Algoritmo</p>
+              <p className="section-title">Algoritmos</p>
               <div className="space-y-1.5">
-                <select
-                  value={alg}
-                  onChange={(e) => { setAlg(e.target.value); clearAlgo() }}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="BFS">BFS</option>
-                  <option value="DFS">DFS</option>
-                  <option value="DIJKSTRA">Dijkstra</option>
-                </select>
                 <input
                   type="text"
                   placeholder="Origem (ex: REC)"
@@ -289,26 +308,51 @@ export default function Home() {
                   list="airports-list"
                   className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
-                {alg === 'DIJKSTRA' && (
-                  <input
-                    type="text"
-                    placeholder="Destino (ex: POA)"
-                    value={target}
-                    onChange={(e) => setTarget(e.target.value.toUpperCase())}
-                    list="airports-list"
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                )}
+                <input
+                  type="text"
+                  placeholder="Destino — Dijkstra (ex: POA)"
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value.toUpperCase())}
+                  list="airports-list"
+                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
                 <datalist id="airports-list">
                   {airports.map((a) => <option key={a} value={a} />)}
                 </datalist>
-                <button
-                  onClick={handleRunAlgo}
-                  disabled={!graphData || loading.algo}
-                  className="btn-primary w-full text-xs"
-                >
-                  {loading.algo ? <Spinner /> : 'Executar'}
-                </button>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: 'BFS', label: 'BFS', color: '#3b82f6' },
+                    { id: 'DFS', label: 'DFS', color: '#6366f1' },
+                    { id: 'DIJKSTRA', label: 'Dijkstra', color: '#f59e0b' },
+                  ].map((a) => {
+                    const on = activeAlg === a.id
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => runAlgo(a.id)}
+                        disabled={!graphData || loading[a.id]}
+                        className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-all disabled:opacity-50
+                          ${on ? 'text-slate-900' : 'text-slate-200 hover:brightness-110'}`}
+                        style={on
+                          ? { background: a.color }
+                          : { background: `${a.color}26`, border: `1px solid ${a.color}66` }}
+                      >
+                        {loading[a.id] ? <Spinner /> : a.label}
+                      </button>
+                    )
+                  })}
+                  <button
+                    disabled
+                    title="Bellman-Ford não se aplica aqui: grafo não-dirigido com pesos não-negativos — o resultado equivale ao Dijkstra. Útil na Parte 2 (grafo dirigido)."
+                    className="inline-flex items-center justify-center rounded-lg px-2 py-2 text-xs font-medium text-slate-500 border border-slate-700 bg-slate-800/50 cursor-not-allowed"
+                  >
+                    Bellman-Ford
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Dijkstra destaca o menor caminho; BFS colore por camadas; DFS mostra a árvore de
+                  busca (verde) e arestas de retorno/ciclo (vermelho).
+                </p>
                 {algoResult && (
                   <button onClick={clearAlgo} className="btn-secondary w-full text-xs">
                     Limpar resultado

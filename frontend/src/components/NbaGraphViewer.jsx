@@ -10,12 +10,41 @@ const LAYER_COLORS = [
   '#b39ddb', '#f06292', '#4dd0e1', '#aed581',
 ]
 
-const DIM_NODE = { background: 'rgba(40,40,55,0.3)', border: 'rgba(60,60,80,0.3)' }
-const DIM_EDGE = { color: '#1a1a28', opacity: 0.1 }
+const DIM_OPACITY = 0.14
+const DIM_EDGE = { color: '#1a1a28', opacity: 0.08 }
 const NEIGH_EDGE = { color: '#4fc3f7', opacity: 0.9 }
+
+// bola de basquete (SVG embutido — sem dependência externa)
+const BASKETBALL =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">` +
+      `<defs><radialGradient id="b" cx="38%" cy="30%" r="75%">` +
+      `<stop offset="0%" stop-color="#ffac4d"/>` +
+      `<stop offset="55%" stop-color="#e8741b"/>` +
+      `<stop offset="100%" stop-color="#b3500a"/>` +
+      `</radialGradient></defs>` +
+      `<circle cx="50" cy="50" r="49" fill="url(#b)"/>` +
+      `<g stroke="#2a1206" stroke-width="2.6" fill="none" stroke-linecap="round">` +
+      `<line x1="50" y1="2" x2="50" y2="98"/>` +
+      `<line x1="2" y1="50" x2="98" y2="50"/>` +
+      `<path d="M17,11 C41,37 41,63 17,89"/>` +
+      `<path d="M83,11 C59,37 59,63 83,89"/>` +
+      `</g></svg>`,
+  )
 
 function dirKey(a, b) {
   return `${a}>${b}`
+}
+
+// objeto de cor do anel (borda colorida em volta da bola) por tier
+function ringColor(c) {
+  return {
+    background: c,
+    border: c,
+    highlight: { background: c, border: '#ffffff' },
+    hover: { background: c, border: '#ffffff' },
+  }
 }
 
 const NbaGraphViewer = forwardRef(function NbaGraphViewer(
@@ -23,7 +52,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
     data,
     activeTiers = [],
     showAllLabels = false,
-    algoHighlight = null, // { type, layerMap?, pathNodes?(Set), pathEdges?(Set of "a>b") }
+    animation = null, // { startNode, edges: [[from,to],...], accent }
     physicsOn = true,
     onStabilized,
     onSelect,
@@ -40,24 +69,44 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
   const tooltipPosRef = useRef({ x: 0, y: 0 })
   const tooltipElRef = useRef(null)
 
+  // animação de percurso de algoritmo
+  const [animStep, setAnimStep] = useState(0)
+  const animTimerRef = useRef(null)
+
+  useEffect(() => {
+    if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = null }
+    if (!animation) { setAnimStep(0); return }
+    setAnimStep(0)
+    const total = animation.edges?.length ?? 0
+    if (total === 0) return
+    const stepMs = Math.max(35, Math.min(320, Math.round(3500 / total)))
+    animTimerRef.current = setInterval(() => {
+      setAnimStep((s) => {
+        if (s >= total) { clearInterval(animTimerRef.current); animTimerRef.current = null; return s }
+        return s + 1
+      })
+    }, stepMs)
+    return () => { if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = null } }
+  }, [animation])
+
   // adjacência (não-dirigida) + metadados originais por id
   const meta = useMemo(() => {
     if (!data) return null
     const adj = {}
     const tierById = {}
-    const origColor = {}
+    const ringById = {}
     const origSize = {}
     data.nodes.forEach((n) => {
       adj[n.id] = new Set()
       tierById[n.id] = n.tier
-      origColor[n.id] = n.color
+      ringById[n.id] = n.color?.background ?? '#fbbf24'
       origSize[n.id] = n.size
     })
     data.edges.forEach((e) => {
       adj[e.from]?.add(e.to)
       adj[e.to]?.add(e.from)
     })
-    return { adj, tierById, origColor, origSize }
+    return { adj, tierById, ringById, origSize }
   }, [data])
 
   useImperativeHandle(ref, () => ({
@@ -81,7 +130,18 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
     const nodeById = Object.fromEntries(data.nodes.map((n) => [n.id, n]))
     const edgeById = Object.fromEntries(data.edges.map((e) => [e.id, e]))
 
-    const vNodes = new DataSet(data.nodes.map((n) => ({ ...n })))
+    const vNodes = new DataSet(
+      data.nodes.map((n) => ({
+        ...n,
+        shape: 'circularImage',
+        image: BASKETBALL,
+        brokenImage: BASKETBALL,
+        color: ringColor(n.color?.background ?? '#fbbf24'),
+        borderWidth: 3,
+        borderWidthSelected: 5,
+        opacity: 1,
+      })),
+    )
     const vEdges = new DataSet(data.edges.map((e) => ({ ...e })))
     nodesDS.current = vNodes
     edgesDS.current = vEdges
@@ -167,11 +227,49 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
     if (selected) onSelect?.(nodesDS.current.get(selected) ?? null)
   }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ---- recomputar estilos (filtro + labels + vizinhança + algoritmo) ----
+  // ---- recomputar estilos (animação | filtro + labels + vizinhança) ----
   useEffect(() => {
     if (!nodesDS.current || !edgesDS.current || !data || !meta) return
 
-    const { adj, tierById, origColor, origSize } = meta
+    const { adj, tierById, ringById, origSize } = meta
+
+    // ---- Modo animação: dim total + revelação progressiva do percurso ----
+    if (animation) {
+      const accent = animation.accent ?? '#ffb74d'
+      const edges = animation.edges ?? []
+      const revealedNodes = new Set(animation.startNode ? [animation.startNode] : [])
+      const revealedEdges = new Set()
+      for (let i = 0; i < Math.min(animStep, edges.length); i++) {
+        const [a, b] = edges[i]
+        revealedNodes.add(a); revealedNodes.add(b)
+        revealedEdges.add(dirKey(a, b))
+      }
+      const newest = animStep > 0 && animStep <= edges.length ? edges[animStep - 1]?.[1] : animation.startNode
+
+      nodesDS.current.update(data.nodes.map((n) => {
+        const on = revealedNodes.has(n.id)
+        const isNewest = n.id === newest
+        return {
+          id: n.id,
+          hidden: false,
+          label: showAllLabels ? n.playerName : n.defaultLabel,
+          opacity: on ? 1 : 0.1,
+          size: isNewest ? origSize[n.id] + 8 : on ? origSize[n.id] + 2 : origSize[n.id],
+          color: isNewest ? ringColor(accent) : ringColor(ringById[n.id]),
+        }
+      }))
+      edgesDS.current.update(data.edges.map((e) => {
+        const on = revealedEdges.has(dirKey(e.from, e.to))
+        return {
+          id: e.id,
+          hidden: false,
+          color: on ? { color: accent, opacity: 1 } : { color: '#1a1a28', opacity: 0.05 },
+          width: on ? 4 : 1,
+        }
+      }))
+      return
+    }
+
     const tierFilterOn = activeTiers.length > 0
     const isVisible = (id) => !tierFilterOn || activeTiers.includes(tierById[id])
 
@@ -181,29 +279,14 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
       neigh.add(selected)
     }
 
-    const bfsLayers = algoHighlight?.type === 'BFS' ? algoHighlight.layerMap : null
-    const dijkstraNodes = algoHighlight?.type === 'DIJKSTRA' ? algoHighlight.pathNodes : null
-    const dijkstraEdges = algoHighlight?.type === 'DIJKSTRA' ? algoHighlight.pathEdges : null
-
     const nodeUpdates = data.nodes.map((n) => {
       const label = showAllLabels ? n.playerName : n.defaultLabel
       const hidden = !isVisible(n.id)
       if (hidden) return { id: n.id, hidden: true, label }
 
-      let color = origColor[n.id]
-      let size = origSize[n.id]
-
-      if (neigh) {
-        color = neigh.has(n.id) ? origColor[n.id] : DIM_NODE
-      } else if (bfsLayers) {
-        const l = bfsLayers[n.id]
-        color = l !== undefined ? { background: LAYER_COLORS[l % LAYER_COLORS.length], border: '#0f0f1a' } : DIM_NODE
-      } else if (dijkstraNodes) {
-        if (dijkstraNodes.has(n.id)) { color = { background: '#ffb74d', border: '#fff3e0' }; size = origSize[n.id] + 6 }
-        else color = DIM_NODE
-      }
-
-      return { id: n.id, hidden: false, label, color, size }
+      const color = ringColor(ringById[n.id])
+      const opacity = neigh && !neigh.has(n.id) ? DIM_OPACITY : 1
+      return { id: n.id, hidden: false, label, color, size: origSize[n.id], opacity }
     })
     nodesDS.current.update(nodeUpdates)
 
@@ -214,16 +297,11 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
       let color = e.color
       if (neigh) {
         color = neigh.has(e.from) && neigh.has(e.to) ? NEIGH_EDGE : DIM_EDGE
-      } else if (dijkstraEdges) {
-        color = dijkstraEdges.has(dirKey(e.from, e.to)) ? { color: '#ffb74d', opacity: 1 } : DIM_EDGE
-      } else if (bfsLayers) {
-        const on = bfsLayers[e.from] !== undefined && bfsLayers[e.to] !== undefined
-        color = on ? { color: '#4fc3f7', opacity: 0.55 } : DIM_EDGE
       }
-      return { id: e.id, hidden: false, color }
+      return { id: e.id, hidden: false, color, width: e.width }
     })
     edgesDS.current.update(edgeUpdates)
-  }, [data, meta, activeTiers, showAllLabels, selected, algoHighlight]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, meta, activeTiers, showAllLabels, selected, animation, animStep]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!data) {
     return (
