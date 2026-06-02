@@ -202,12 +202,17 @@ export default function Home() {
 
       <header className="flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b border-slate-700 shrink-0">
         <div>
-          <h1 className="text-sm font-bold text-slate-100">Rede de Aeroportos do Brasil</h1>
+          <h1 className="text-sm font-bold text-slate-100">Parte 1 — Rede de Aeroportos do Brasil</h1>
           <p className="text-xs text-slate-500">Projeto de Grafos</p>
         </div>
-        <button onClick={() => navigate('/dashboard')} className="btn-primary text-xs">
-          Dashboard
-        </button>
+        <div className="flex gap-1.5">
+          <button onClick={() => navigate('/')} className="btn-secondary text-xs">
+            Início
+          </button>
+          <button onClick={() => navigate('/parte1/dashboard')} className="btn-primary text-xs">
+            Dashboard
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">

@@ -144,10 +144,10 @@ export default function Dashboard() {
 
       <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-slate-800/95 backdrop-blur border-b border-slate-700">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/')} className="btn-secondary text-sm">
+          <button onClick={() => navigate('/parte1')} className="btn-secondary text-sm">
             Voltar
           </button>
-          <h1 className="text-base font-bold text-slate-100">Dashboard de Analise</h1>
+          <h1 className="text-base font-bold text-slate-100">Parte 1 — Dashboard de Analise</h1>
         </div>
         <span className="text-xs text-slate-500">{statsLabel}</span>
       </header>
