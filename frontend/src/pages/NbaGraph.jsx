@@ -104,7 +104,6 @@ export default function NbaGraph() {
   const [target, setTarget] = useState('')
   const [activeAlg, setActiveAlg] = useState(null)
   const [algoResult, setAlgoResult] = useState(null)
-  const [algoHighlight, setAlgoHighlight] = useState(null)
 
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
@@ -128,13 +127,12 @@ export default function NbaGraph() {
 
   const handleSelect = useCallback((node) => {
     setSelectedNode(node)
-    if (node) { setAlgoHighlight(null); setActiveAlg(null) } // clicar num nó tem prioridade
+    if (node) { setActiveAlg(null) } // clicar num nó tem prioridade
   }, [])
 
   const handleSearch = (val) => {
     setSearch(val)
     if (players.includes(val)) {
-      setAlgoHighlight(null)
       setActiveAlg(null)
       graphRef.current?.focusOn(val)
     }
@@ -159,20 +157,6 @@ export default function NbaGraph() {
       graphRef.current?.clearSelection()
       setSelectedNode(null)
 
-      if (result.algorithm === 'BFS') {
-        const layerMap = {}
-        result.layers.forEach((layer, i) => layer.forEach((n) => { layerMap[n] = i }))
-        setAlgoHighlight({ type: 'BFS', layerMap })
-      } else if ((result.algorithm === 'DIJKSTRA' || result.algorithm === 'BELLMAN-FORD') && result.caminho) {
-        const pathNodes = new Set(result.caminho)
-        const pathEdges = new Set()
-        for (let i = 0; i < result.caminho.length - 1; i++) {
-          pathEdges.add(`${result.caminho[i]}>${result.caminho[i + 1]}`)
-        }
-        setAlgoHighlight({ type: 'PATH', pathNodes, pathEdges })
-      } else {
-        setAlgoHighlight(null) // DFS / sem caminho: apenas resultado textual
-      }
     } catch (e) {
       showToast(e.message ?? 'Erro ao executar algoritmo', 'error')
     } finally {
@@ -185,7 +169,6 @@ export default function NbaGraph() {
     setShowAllLabels(false)
     setActiveAlg(null)
     setAlgoResult(null)
-    setAlgoHighlight(null)
     setSelectedNode(null)
     setSearch('')
     graphRef.current?.clearSelection()
@@ -235,7 +218,6 @@ export default function NbaGraph() {
             data={data}
             activeTiers={activeTiers}
             showAllLabels={showAllLabels}
-            algoHighlight={algoHighlight}
             physicsOn={physicsOn}
             onStabilized={() => setPhysicsOn(false)}
             onSelect={handleSelect}

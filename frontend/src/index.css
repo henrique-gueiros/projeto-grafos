@@ -60,9 +60,93 @@ div.vis-tooltip {
   border: 1px solid #334155 !important;
   border-radius: 8px !important;
   color: #e2e8f0 !important;
-  font-family: ui-monospace, monospace !important;
+  font-family: 'ui-sans-serif', monospace !important;
+  font-weight: 900 !important;
   font-size: 12px !important;
   padding: 8px 12px !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
   pointer-events: none !important;
 }
+
+/* ── Cockpit / Radar UI system ─────────────────────────────── */
+
+.cockpit-tab-bar {
+  display: flex;
+  border-bottom: 1px solid rgba(0, 150, 255, 0.18);
+  background: #04090f;
+  flex-shrink: 0;
+}
+.cockpit-tab {
+  flex: 1;
+  padding: 9px 0;
+  text-align: center;
+  font-family: 'ui-sans-serif', monospace;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  color: #1a3050;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.cockpit-tab.active {
+  color: #7edcff;
+  border-bottom: 2px solid #00b4ff;
+}
+.cockpit-label {
+  font-family: 'ui-sans-serif', monospace;
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #2a5070;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: block;
+}
+.cockpit-divider {
+  border: none;
+  border-top: 1px solid rgba(0, 150, 255, 0.08);
+  margin: 0;
+}
+.neon-input {
+  background: rgba(0, 80, 160, 0.08);
+  border: 1px solid rgba(0, 150, 255, 0.18);
+  border-radius: 4px;
+  color: #6ea8c8;
+  font-family: 'ui-sans-serif', monospace;
+  font-weight: 900;
+  font-size: 11px;
+  padding: 6px 10px 6px 24px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.neon-input:focus {
+  border-color: rgba(0, 180, 255, 0.4);
+  background: rgba(0, 80, 160, 0.13);
+}
+.neon-input::placeholder { color: #1a3a50; }
+
+.neon-btn {
+  border-radius: 4px;
+  padding: 8px 4px;
+  text-align: center;
+  font-family: 'ui-sans-serif', monospace;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+}
+.neon-btn-blue   { background: rgba(0,180,255,0.12);   border-color: rgba(0,180,255,0.35);   color: #7edcff; }
+.neon-btn-purple { background: rgba(99,102,241,0.12);  border-color: rgba(99,102,241,0.30);  color: #a78bfa; }
+.neon-btn-gold   { background: rgba(245,197,66,0.12);  border-color: rgba(245,197,66,0.30);  color: #f5c542; }
+.neon-btn-dim    { border-color: rgba(255,255,255,0.04); color: #1a2a3a; cursor: not-allowed; }
+.neon-btn-blue:hover   { background: rgba(0,180,255,0.22); }
+.neon-btn-purple:hover { background: rgba(99,102,241,0.22); }
+.neon-btn-gold:hover   { background: rgba(245,197,66,0.22); }
+.neon-btn-dim:hover { background: transparent; }

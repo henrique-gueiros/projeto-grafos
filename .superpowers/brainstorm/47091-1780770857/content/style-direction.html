@@ -1,0 +1,232 @@
+<h2>Qual direção visual você quer para o grafo?</h2>
+<p class="subtitle">Cada opção mantém a funcionalidade atual (algoritmos, filtros, caminhos) — só muda a estética</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;overflow:hidden;border-radius:8px 8px 0 0;">
+      <div style="
+        background: linear-gradient(135deg, #0a0e1a 0%, #0d1526 100%);
+        position:relative; height:200px; overflow:hidden;
+        display:flex;align-items:center;justify-content:center;
+      ">
+        <!-- Simulated airport background -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 70%, #0a2040 0%, transparent 60%),radial-gradient(ellipse at 70% 30%, #0a1a30 0%, transparent 60%);opacity:0.8;"></div>
+        <!-- Runway lights simulation -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,rgba(255,200,50,0.08),transparent);"></div>
+        <div style="position:absolute;bottom:10px;left:20px;right:20px;display:flex;justify-content:space-between;">
+          <div style="width:2px;height:40px;background:rgba(255,200,50,0.3);"></div>
+          <div style="width:2px;height:40px;background:rgba(255,200,50,0.2);"></div>
+          <div style="width:2px;height:40px;background:rgba(255,200,50,0.15);"></div>
+          <div style="width:2px;height:40px;background:rgba(255,200,50,0.1);"></div>
+        </div>
+        <!-- Graph mini-preview -->
+        <svg width="260" height="160" style="position:relative;z-index:2;">
+          <!-- Glowing edges -->
+          <defs>
+            <filter id="glow-a">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glow-yellow">
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- Gold route (thick, glowing) -->
+          <line x1="30" y1="120" x2="130" y2="60" stroke="#f5c542" stroke-width="3" filter="url(#glow-yellow)" opacity="0.9"/>
+          <line x1="130" y1="60" x2="230" y2="90" stroke="#f5c542" stroke-width="3" filter="url(#glow-yellow)" opacity="0.9"/>
+          <!-- Blue routes -->
+          <line x1="130" y1="60" x2="180" y2="130" stroke="#3b9eff" stroke-width="2" filter="url(#glow-a)" opacity="0.8"/>
+          <line x1="180" y1="130" x2="80" y2="140" stroke="#3b9eff" stroke-width="2" filter="url(#glow-a)" opacity="0.8"/>
+          <line x1="130" y1="60" x2="80" y2="30" stroke="#3b9eff" stroke-width="1.5" filter="url(#glow-a)" opacity="0.6"/>
+          <!-- Dashed green routes -->
+          <line x1="30" y1="120" x2="80" y2="140" stroke="#22dd88" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
+          <line x1="80" y1="30" x2="30" y2="60" stroke="#22dd88" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>
+          <!-- Hub node (GRG - central) - tower pin style -->
+          <circle cx="130" cy="60" r="14" fill="#1a2a4a" stroke="#3b9eff" stroke-width="2" filter="url(#glow-a)"/>
+          <circle cx="130" cy="60" r="20" fill="none" stroke="#3b9eff" stroke-width="0.5" opacity="0.4"/>
+          <circle cx="130" cy="60" r="26" fill="none" stroke="#3b9eff" stroke-width="0.3" opacity="0.2"/>
+          <text x="130" y="64" text-anchor="middle" fill="#7ec8ff" font-size="9" font-family="monospace" font-weight="bold">GRU</text>
+          <!-- Other nodes -->
+          <circle cx="30" cy="120" r="10" fill="#1a2a3a" stroke="#2dd4bf" stroke-width="1.5" filter="url(#glow-a)"/>
+          <circle cx="30" cy="120" r="15" fill="none" stroke="#2dd4bf" stroke-width="0.4" opacity="0.3"/>
+          <text x="30" y="124" text-anchor="middle" fill="#2dd4bf" font-size="7" font-family="monospace">MAN</text>
+          <circle cx="230" cy="90" r="10" fill="#2a1a2a" stroke="#fb923c" stroke-width="1.5" filter="url(#glow-a)"/>
+          <circle cx="230" cy="90" r="15" fill="none" stroke="#fb923c" stroke-width="0.4" opacity="0.3"/>
+          <text x="230" y="94" text-anchor="middle" fill="#fb923c" font-size="7" font-family="monospace">REC</text>
+          <circle cx="180" cy="130" r="9" fill="#1a2040" stroke="#818cf8" stroke-width="1.5"/>
+          <text x="180" y="134" text-anchor="middle" fill="#818cf8" font-size="7" font-family="monospace">GIG</text>
+          <circle cx="80" cy="140" r="9" fill="#1a2a20" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="80" y="144" text-anchor="middle" fill="#4ade80" font-size="7" font-family="monospace">POA</text>
+          <circle cx="80" cy="30" r="8" fill="#2a2010" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="80" y="34" text-anchor="middle" fill="#fbbf24" font-size="7" font-family="monospace">BSB</text>
+          <!-- Region labels -->
+          <rect x="5" y="5" width="42" height="14" rx="3" fill="rgba(45,212,191,0.15)" stroke="rgba(45,212,191,0.4)" stroke-width="0.5"/>
+          <text x="26" y="15" text-anchor="middle" fill="#2dd4bf" font-size="7" font-family="monospace" font-weight="bold">NORTE</text>
+          <rect x="195" y="5" width="56" height="14" rx="3" fill="rgba(251,146,60,0.15)" stroke="rgba(251,146,60,0.4)" stroke-width="0.5"/>
+          <text x="223" y="15" text-anchor="middle" fill="#fb923c" font-size="7" font-family="monospace" font-weight="bold">NORDESTE</text>
+        </svg>
+        <!-- Sidebar preview strip -->
+        <div style="position:absolute;right:0;top:0;bottom:0;width:60px;background:rgba(10,15,30,0.92);border-left:1px solid rgba(59,154,255,0.2);display:flex;flex-direction:column;gap:4px;padding:8px 5px;">
+          <div style="height:8px;background:#1a3060;border-radius:2px;"></div>
+          <div style="height:1px;background:rgba(255,255,255,0.05);margin:2px 0;"></div>
+          <div style="height:5px;background:#0f2040;border-radius:2px;width:80%;"></div>
+          <div style="height:5px;background:#0f2040;border-radius:2px;width:60%;"></div>
+          <div style="height:14px;background:rgba(59,154,255,0.3);border-radius:3px;border:1px solid rgba(59,154,255,0.5);"></div>
+          <div style="height:1px;background:rgba(255,255,255,0.05);margin:2px 0;"></div>
+          <div style="height:5px;background:rgba(245,197,66,0.4);border-radius:8px;"></div>
+          <div style="height:5px;background:rgba(245,197,66,0.25);border-radius:8px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Cinemático (mais próximo da referência)</h3>
+      <p>Fundo escuro aeroportuário, arestas com glow neon coloridas, nós com halo pulsante, labels de região sobrepostas, painel lateral reformulado com estética futurista.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">
+        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(34,221,136,0.15);color:#22dd88;border:1px solid rgba(34,221,136,0.3);">✓ Impacto visual alto</span>
+        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);">⚠ Mais trabalho</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;overflow:hidden;border-radius:8px 8px 0 0;">
+      <div style="
+        background: #0f172a;
+        position:relative; height:200px; overflow:hidden;
+        display:flex;align-items:center;justify-content:center;
+      ">
+        <!-- Grid pattern -->
+        <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.05) 1px,transparent 1px);background-size:24px 24px;"></div>
+        <svg width="260" height="160" style="position:relative;z-index:2;">
+          <defs>
+            <filter id="glow-b">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- Edges - colored but less glow -->
+          <line x1="30" y1="120" x2="130" y2="60" stroke="#f59e0b" stroke-width="2.5" filter="url(#glow-b)" opacity="0.8"/>
+          <line x1="130" y1="60" x2="230" y2="90" stroke="#f59e0b" stroke-width="2.5" filter="url(#glow-b)" opacity="0.8"/>
+          <line x1="130" y1="60" x2="180" y2="130" stroke="#3b82f6" stroke-width="1.5" opacity="0.7"/>
+          <line x1="180" y1="130" x2="80" y2="140" stroke="#3b82f6" stroke-width="1.5" opacity="0.7"/>
+          <line x1="130" y1="60" x2="80" y2="30" stroke="#10b981" stroke-width="1" stroke-dasharray="5 3" opacity="0.6"/>
+          <line x1="30" y1="120" x2="80" y2="140" stroke="#10b981" stroke-width="1" stroke-dasharray="5 3" opacity="0.5"/>
+          <!-- Nodes - dot style, same colors as now but stronger border glow -->
+          <circle cx="130" cy="60" r="16" fill="#1e293b" stroke="#a78bfa" stroke-width="2.5" filter="url(#glow-b)"/>
+          <text x="130" y="64" text-anchor="middle" fill="#e2e8f0" font-size="9" font-family="monospace" font-weight="bold">GRU</text>
+          <circle cx="30" cy="120" r="11" fill="#1e293b" stroke="#2dd4bf" stroke-width="2"/>
+          <text x="30" y="124" text-anchor="middle" fill="#e2e8f0" font-size="7" font-family="monospace">MAN</text>
+          <circle cx="230" cy="90" r="11" fill="#1e293b" stroke="#fb923c" stroke-width="2"/>
+          <text x="230" y="94" text-anchor="middle" fill="#e2e8f0" font-size="7" font-family="monospace">REC</text>
+          <circle cx="180" cy="130" r="10" fill="#1e293b" stroke="#818cf8" stroke-width="2"/>
+          <text x="180" y="134" text-anchor="middle" fill="#e2e8f0" font-size="7" font-family="monospace">GIG</text>
+          <circle cx="80" cy="140" r="10" fill="#1e293b" stroke="#4ade80" stroke-width="2"/>
+          <text x="80" y="144" text-anchor="middle" fill="#e2e8f0" font-size="7" font-family="monospace">POA</text>
+          <circle cx="80" cy="30" r="9" fill="#1e293b" stroke="#fbbf24" stroke-width="2"/>
+          <text x="80" y="34" text-anchor="middle" fill="#e2e8f0" font-size="7" font-family="monospace">BSB</text>
+        </svg>
+        <div style="position:absolute;right:0;top:0;bottom:0;width:60px;background:rgba(15,23,42,0.95);border-left:1px solid #1e293b;display:flex;flex-direction:column;gap:4px;padding:8px 5px;">
+          <div style="height:8px;background:#1e293b;border-radius:2px;"></div>
+          <div style="height:1px;background:#334155;margin:2px 0;"></div>
+          <div style="height:5px;background:#1e293b;border-radius:2px;width:80%;"></div>
+          <div style="height:5px;background:#1e293b;border-radius:2px;width:60%;"></div>
+          <div style="height:14px;background:rgba(59,130,246,0.2);border-radius:3px;border:1px solid #334155;"></div>
+          <div style="height:1px;background:#334155;margin:2px 0;"></div>
+          <div style="height:5px;background:rgba(245,158,11,0.3);border-radius:8px;"></div>
+          <div style="height:5px;background:rgba(245,158,11,0.2);border-radius:8px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Dark Enhanced (evolução do atual)</h3>
+      <p>Mantém a base atual (slate dark), adiciona grid sutil, glow leve nas arestas e nós, sidebar mais limpa. Menos dramático, mais polido.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">
+        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(34,221,136,0.15);color:#22dd88;border:1px solid rgba(34,221,136,0.3);">✓ Implementação rápida</span>
+        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(34,221,136,0.15);color:#22dd88;border:1px solid rgba(34,221,136,0.3);">✓ Consistente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;overflow:hidden;border-radius:8px 8px 0 0;">
+      <div style="
+        background: #050a14;
+        position:relative; height:200px; overflow:hidden;
+        display:flex;align-items:center;justify-content:center;
+      ">
+        <!-- Map-like texture with radial glow -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%, rgba(0,100,200,0.12) 0%, transparent 70%);"></div>
+        <!-- Latitude lines simulation -->
+        <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 29px,rgba(0,150,255,0.04) 30px);"></div>
+        <svg width="260" height="160" style="position:relative;z-index:2;">
+          <defs>
+            <filter id="glow-c" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <linearGradient id="edge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#f5c542" stop-opacity="0.2"/>
+              <stop offset="50%" stop-color="#f5c542" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#f5c542" stop-opacity="0.2"/>
+            </linearGradient>
+          </defs>
+          <!-- Animated-look gradient edges -->
+          <line x1="30" y1="120" x2="130" y2="60" stroke="#f5c542" stroke-width="4" filter="url(#glow-c)" opacity="0.7"/>
+          <line x1="30" y1="120" x2="130" y2="60" stroke="white" stroke-width="1" opacity="0.3"/>
+          <line x1="130" y1="60" x2="230" y2="90" stroke="#f5c542" stroke-width="4" filter="url(#glow-c)" opacity="0.7"/>
+          <line x1="130" y1="60" x2="230" y2="90" stroke="white" stroke-width="1" opacity="0.3"/>
+          <line x1="130" y1="60" x2="180" y2="130" stroke="#00b4ff" stroke-width="2.5" filter="url(#glow-c)" opacity="0.8"/>
+          <line x1="180" y1="130" x2="80" y2="140" stroke="#00b4ff" stroke-width="2.5" filter="url(#glow-c)" opacity="0.8"/>
+          <line x1="130" y1="60" x2="80" y2="30" stroke="#22ff88" stroke-width="1.5" stroke-dasharray="6 3" opacity="0.5" filter="url(#glow-c)"/>
+          <line x1="30" y1="120" x2="80" y2="140" stroke="#22ff88" stroke-width="1.5" stroke-dasharray="6 3" opacity="0.4"/>
+          <!-- Hub node with outer rings -->
+          <circle cx="130" cy="60" r="28" fill="none" stroke="#00b4ff" stroke-width="0.5" opacity="0.15"/>
+          <circle cx="130" cy="60" r="20" fill="none" stroke="#00b4ff" stroke-width="0.8" opacity="0.25"/>
+          <circle cx="130" cy="60" r="12" fill="#061830" stroke="#00b4ff" stroke-width="2" filter="url(#glow-c)"/>
+          <text x="130" y="64" text-anchor="middle" fill="#7edcff" font-size="9" font-family="monospace" font-weight="bold">GRU</text>
+          <!-- Other nodes with rings -->
+          <circle cx="30" cy="120" r="16" fill="none" stroke="#2dd4bf" stroke-width="0.5" opacity="0.2"/>
+          <circle cx="30" cy="120" r="9" fill="#061824" stroke="#2dd4bf" stroke-width="1.5" filter="url(#glow-c)"/>
+          <text x="30" y="124" text-anchor="middle" fill="#2dd4bf" font-size="7" font-family="monospace">MAN</text>
+          <circle cx="230" cy="90" r="16" fill="none" stroke="#fb923c" stroke-width="0.5" opacity="0.2"/>
+          <circle cx="230" cy="90" r="9" fill="#180a04" stroke="#fb923c" stroke-width="1.5" filter="url(#glow-c)"/>
+          <text x="230" y="94" text-anchor="middle" fill="#fb923c" font-size="7" font-family="monospace">REC</text>
+          <circle cx="180" cy="130" r="9" fill="#080818" stroke="#818cf8" stroke-width="1.5"/>
+          <text x="180" y="134" text-anchor="middle" fill="#818cf8" font-size="7" font-family="monospace">GIG</text>
+          <circle cx="80" cy="140" r="9" fill="#051208" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="80" y="144" text-anchor="middle" fill="#4ade80" font-size="7" font-family="monospace">POA</text>
+          <circle cx="80" cy="30" r="8" fill="#101000" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="80" y="34" text-anchor="middle" fill="#fbbf24" font-size="7" font-family="monospace">BSB</text>
+          <!-- Route arrows on edges -->
+          <polygon points="95,87 99,79 91,79" fill="#f5c542" opacity="0.7"/>
+          <polygon points="178,77 182,69 174,69" fill="#f5c542" opacity="0.7"/>
+        </svg>
+        <div style="position:absolute;right:0;top:0;bottom:0;width:60px;background:rgba(5,10,20,0.95);border-left:1px solid rgba(0,100,255,0.15);display:flex;flex-direction:column;gap:4px;padding:8px 5px;">
+          <div style="height:8px;background:rgba(0,100,255,0.15);border-radius:2px;border:1px solid rgba(0,100,255,0.2);"></div>
+          <div style="height:1px;background:rgba(0,150,255,0.1);margin:2px 0;"></div>
+          <div style="height:5px;background:rgba(0,100,200,0.1);border-radius:2px;width:80%;"></div>
+          <div style="height:14px;background:rgba(0,180,255,0.15);border-radius:3px;border:1px solid rgba(0,180,255,0.3);"></div>
+          <div style="height:1px;background:rgba(0,150,255,0.1);margin:2px 0;"></div>
+          <div style="height:5px;background:rgba(245,197,66,0.4);border-radius:8px;border:1px solid rgba(245,197,66,0.2);"></div>
+          <div style="height:5px;background:rgba(245,197,66,0.2);border-radius:8px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Radar / Flight Control (fidelidade máxima à referência)</h3>
+      <p>Fundo escuro profundo com linhas de latitude, arestas com glow duplo (halo + linha branca central), nós com anéis orbitais, setas de direção nas rotas. Idêntico ao spirit da imagem.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">
+        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(34,221,136,0.15);color:#22dd88;border:1px solid rgba(34,221,136,0.3);">✓ Mais dramático</span>
+        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);">⚠ Requer ajuste fino</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Clique numa opção para selecionar, depois me diga no terminal.</p>

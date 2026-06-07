@@ -10,17 +10,30 @@ export const REGION_HEX = {
   'Centro-Oeste': '#fbbf24',
 }
 
+const REGION_BG = {
+  Norte: '#040e18',
+  Nordeste: '#140800',
+  Sudeste: '#06041a',
+  Sul: '#051208',
+  'Centro-Oeste': '#100a00',
+}
+
 export const CONN_COLORS = {
-  hub: '#3b82f6',
-  regional: '#10b981',
-  'hub-hub': '#a78bfa',
+  hub: '#00b4ff',
+  regional: '#22dd88',
+  'hub-hub': '#f5c542',
   inter_regional: '#f59e0b',
 }
 
-const LAYER_COLORS = [
-  '#f59e0b', '#3b82f6', '#10b981', '#818cf8',
-  '#fb923c', '#2dd4bf', '#f87171', '#a78bfa',
-]
+const EDGE_WIDTHS      = { hub: 2, regional: 1.5, 'hub-hub': 3, inter_regional: 2 }
+const EDGE_SHADOW_SIZE = { hub: 12, regional: 8,  'hub-hub': 16, inter_regional: 10 }
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 function edgeKey(a, b) {
   return a < b ? `${a}|${b}` : `${b}|${a}`
@@ -43,12 +56,14 @@ const GraphViewer = forwardRef(function GraphViewer(
   const networkRef = useRef(null)
   const nodesDS = useRef(null)
   const edgesDS = useRef(null)
+  const degreeMapRef = useRef({})
   const [tooltip, setTooltip] = useState(null)
   const tooltipPosRef = useRef({ x: 0, y: 0 })
   const tooltipElRef = useRef(null)
 
   // animação de percurso de algoritmo
   const [animStep, setAnimStep] = useState(0)
+  const selectedNodeRef = useRef(null)
   const animTimerRef = useRef(null)
 
   useEffect(() => {
@@ -81,20 +96,33 @@ const GraphViewer = forwardRef(function GraphViewer(
     const nodeById = Object.fromEntries(data.nodes.map((n) => [n.id, n]))
     const edgeById = Object.fromEntries(data.edges.map((e) => [e.id, e]))
 
+    const degreeMap = {}
+    data.edges.forEach((e) => {
+      degreeMap[e.from] = (degreeMap[e.from] || 0) + 1
+      degreeMap[e.to] = (degreeMap[e.to] || 0) + 1
+    })
+    degreeMapRef.current = degreeMap
+
     const vNodes = new DataSet(
-      data.nodes.map((n) => ({
-        id: n.id,
-        label: n.id,
-        group: n.regiao,
-        color: {
-          background: REGION_HEX[n.regiao] ?? '#64748b',
-          border: '#0f172a',
-          highlight: { background: '#f59e0b', border: '#d97706' },
-          hover: { background: '#fcd34d', border: '#d97706' },
-        },
-        font: { color: '#ffffff', size: 11, bold: true },
-        size: 14,
-      })),
+      data.nodes.map((n) => {
+        const regionColor = REGION_HEX[n.regiao] ?? '#64748b'
+        const deg = degreeMap[n.id] ?? 0
+        const size = deg >= 15 ? 20 : deg >= 7 ? 16 : 12
+        return {
+          id: n.id,
+          label: n.id,
+          group: n.regiao,
+          color: {
+            background: REGION_BG[n.regiao] ?? '#0a1020',
+            border: regionColor,
+            highlight: { background: '#f59e0b', border: '#d97706' },
+            hover: { background: hexToRgba(regionColor, 0.33), border: regionColor },
+          },
+          font: { color: regionColor, size: 10, bold: true, face: 'Consolas, Monaco, "Courier New", monospace' },
+          size,
+          shadow: { enabled: true, color: regionColor, size: 15, x: 0, y: 0 },
+        }
+      }),
     )
 
     const vEdges = new DataSet(
@@ -103,8 +131,10 @@ const GraphViewer = forwardRef(function GraphViewer(
         from: e.from,
         to: e.to,
         tipo: e.tipo,
-        color: { color: CONN_COLORS[e.tipo] ?? '#475569', opacity: 1 },
+        color: { color: '#2a3a4a', opacity: 1 },
         width: 1,
+        dashes: false,
+        shadow: { enabled: false },
         smooth: { type: 'continuous', roundness: 0.2 },
       })),
     )
@@ -135,6 +165,40 @@ const GraphViewer = forwardRef(function GraphViewer(
     network.on('stabilizationIterationsDone', () => {
       network.setOptions({ physics: { enabled: false } })
       onStabilized?.()
+    })
+
+    network.on('selectNode', ({ nodes }) => {
+      if (!nodes.length || !edgesDS.current) return
+      const nodeId = nodes[0]
+      selectedNodeRef.current = nodeId
+      edgesDS.current.update(
+        data.edges.map((e) => {
+          const connected = e.from === nodeId || e.to === nodeId
+          if (!connected) return { id: e.id, color: { color: '#2a3a4a', opacity: 1 }, width: 1, shadow: { enabled: false }, dashes: false }
+          const color = CONN_COLORS[e.tipo] ?? '#64748b'
+          return {
+            id: e.id,
+            color: { color, opacity: 1 },
+            width: EDGE_WIDTHS[e.tipo] ?? 1.5,
+            shadow: { enabled: true, color, size: EDGE_SHADOW_SIZE[e.tipo] ?? 8, x: 0, y: 0 },
+            dashes: e.tipo === 'regional' ? [7, 4] : false,
+          }
+        })
+      )
+    })
+
+    network.on('deselectNode', () => {
+      selectedNodeRef.current = null
+      if (!edgesDS.current) return
+      edgesDS.current.update(
+        data.edges.map((e) => ({
+          id: e.id,
+          color: { color: '#2a3a4a', opacity: 1 },
+          width: 1,
+          shadow: { enabled: false },
+          dashes: false,
+        }))
+      )
     })
 
     network.on('hoverNode', ({ node }) => {
@@ -189,7 +253,7 @@ const GraphViewer = forwardRef(function GraphViewer(
           opacity: on ? 1 : 0.12,
           size: isNewest ? 22 : on ? 17 : 13,
           color: {
-            background: REGION_HEX[n.regiao] ?? '#64748b',
+            background: REGION_BG[n.regiao] ?? '#0a1020',
             border: on ? accent : '#0f172a',
             highlight: { background: accent, border: '#ffffff' },
             hover: { background: accent, border: '#ffffff' },
@@ -204,6 +268,10 @@ const GraphViewer = forwardRef(function GraphViewer(
           hidden: false,
           color: on ? { color: accent, opacity: 1 } : { color: '#475569', opacity: 0.06 },
           width: on ? 4 : 1,
+          shadow: on
+            ? { enabled: true, color: accent, size: 10, x: 0, y: 0 }
+            : { enabled: false },
+          dashes: false,
         }
       }))
       return
@@ -238,13 +306,17 @@ const GraphViewer = forwardRef(function GraphViewer(
         id: n.id,
         hidden,
         opacity: 1,
-        size: 14,
+        size: (() => {
+          const deg = degreeMapRef.current[n.id] ?? 0
+          return deg >= 15 ? 20 : deg >= 7 ? 16 : 12
+        })(),
         color: {
-          background: REGION_HEX[n.regiao] ?? '#64748b',
-          border: '#0f172a',
+          background: REGION_BG[n.regiao] ?? '#0a1020',
+          border: REGION_HEX[n.regiao] ?? '#64748b',
           highlight: { background: '#f59e0b', border: '#d97706' },
-          hover: { background: '#fcd34d', border: '#d97706' },
+          hover: { background: hexToRgba(REGION_HEX[n.regiao] ?? '#64748b', 0.33), border: REGION_HEX[n.regiao] ?? '#64748b' },
         },
+        shadow: { enabled: true, color: REGION_HEX[n.regiao] ?? '#64748b', size: 15, x: 0, y: 0 },
       }
     })
 
@@ -279,32 +351,59 @@ const GraphViewer = forwardRef(function GraphViewer(
       const inP1 = p1Active && path1Set.has(key)
       const inP2 = p2Active && path2Set.has(key)
       if (inP1 && inP2) {
-        return { id: e.id, hidden: false, color: { color: '#ffaa00', opacity: 1 }, width: 5 }
+        return { id: e.id, hidden: false, color: { color: '#ffaa00', opacity: 1 }, width: 5, shadow: { enabled: false }, dashes: false }
       }
       if (inP1) {
-        return { id: e.id, hidden: false, color: { color: mandatoryPaths.path1.color, opacity: 1 }, width: 4 }
+        return { id: e.id, hidden: false, color: { color: mandatoryPaths.path1.color, opacity: 1 }, width: 4, shadow: { enabled: false }, dashes: false }
       }
       if (inP2) {
-        return { id: e.id, hidden: false, color: { color: mandatoryPaths.path2.color, opacity: 1 }, width: 4 }
+        return { id: e.id, hidden: false, color: { color: mandatoryPaths.path2.color, opacity: 1 }, width: 4, shadow: { enabled: false }, dashes: false }
       }
 
       if (anyRegionHL) {
         for (const [regiao, rset] of Object.entries(regionSets)) {
           if (rset.has(key)) {
-            return { id: e.id, hidden: false, color: { color: REGION_HEX[regiao] ?? '#64748b', opacity: 1 }, width: 3 }
+            return { id: e.id, hidden: false, color: { color: REGION_HEX[regiao] ?? '#64748b', opacity: 1 }, width: 3, shadow: { enabled: true, color: REGION_HEX[regiao] ?? '#64748b', size: 10, x: 0, y: 0 }, dashes: false }
           }
         }
-        return { id: e.id, hidden: false, color: { color: '#475569', opacity: 0.1 }, width: 1 }
+        return { id: e.id, hidden: false, color: { color: '#475569', opacity: 0.06 }, width: 1, shadow: { enabled: false }, dashes: false }
       }
 
       if (anyPath) {
-        return { id: e.id, hidden: false, color: { color: '#475569', opacity: 0.1 }, width: 1 }
+        return { id: e.id, hidden: false, color: { color: '#475569', opacity: 0.06 }, width: 1, shadow: { enabled: false }, dashes: false }
       }
 
-      return { id: e.id, hidden: false, color: { color: CONN_COLORS[e.tipo] ?? '#475569', opacity: 1 }, width: 1 }
+      return {
+        id: e.id,
+        hidden: false,
+        color: { color: '#2a3a4a', opacity: 1 },
+        width: 1,
+        shadow: { enabled: false },
+        dashes: false,
+      }
     })
 
     edgesDS.current.update(edgeUpdates)
+
+    // Re-apply selection glow if a node is selected
+    const nodeId = selectedNodeRef.current
+    if (nodeId && !anyPath && !anyRegionHL && !animation) {
+      edgesDS.current.update(
+        data.edges
+          .filter((e) => e.from === nodeId || e.to === nodeId)
+          .map((e) => {
+            const color = CONN_COLORS[e.tipo] ?? '#64748b'
+            return {
+              id: e.id,
+              hidden: false,
+              color: { color, opacity: 1 },
+              width: EDGE_WIDTHS[e.tipo] ?? 1.5,
+              shadow: { enabled: true, color, size: EDGE_SHADOW_SIZE[e.tipo] ?? 8, x: 0, y: 0 },
+              dashes: e.tipo === 'regional' ? [7, 4] : false,
+            }
+          })
+      )
+    }
   }, [filters, pathHighlights, regionEdgeHL, mandatoryPaths, animation, animStep, data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!data) {
@@ -332,7 +431,56 @@ const GraphViewer = forwardRef(function GraphViewer(
         }
       }}
     >
-      <div ref={containerRef} className="w-full h-full" />
+      <div
+        ref={containerRef}
+        className="w-full h-full"
+        style={{
+          background: [
+            'repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(0,150,255,0.04) 30px)',
+            'radial-gradient(ellipse at 48% 48%, rgba(0,80,180,0.10) 0%, transparent 65%)',
+            '#050a14',
+          ].join(', '),
+        }}
+      />
+
+
+      {/* Status bar */}
+      {data && (
+        <div
+          style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
+            padding: '5px 14px',
+            background: 'rgba(3,6,16,0.88)',
+            borderTop: '1px solid rgba(0,150,255,0.12)',
+            display: 'flex', alignItems: 'center', gap: 16,
+            fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 9,
+            color: '#2a5070', letterSpacing: '1px',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="22" height="6" style={{ display: 'block' }}>
+              <line x1="0" y1="3" x2="22" y2="3" stroke="#00b4ff" strokeWidth="2" />
+            </svg>
+            Hub
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="22" height="6" style={{ display: 'block' }}>
+              <line x1="0" y1="3" x2="22" y2="3" stroke="#f5c542" strokeWidth="2.5" />
+            </svg>
+            Hub-Hub
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="22" height="6" style={{ display: 'block' }}>
+              <line x1="0" y1="3" x2="22" y2="3" stroke="#22dd88" strokeWidth="1.5" strokeDasharray="4 2" />
+            </svg>
+            Regional
+          </span>
+          <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span>✈ {data.nodes.length}</span>
+            <span>⬡ {data.edges.length}</span>
+          </span>
+        </div>
+      )}
 
       {tooltip && (
         <div
@@ -344,7 +492,7 @@ const GraphViewer = forwardRef(function GraphViewer(
             background: '#1e293b',
             border: '1px solid #334155',
             color: '#e2e8f0',
-            fontFamily: 'ui-monospace, monospace',
+            fontFamily: "'Space Mono', monospace", fontWeight: 700,
             minWidth: 160,
           }}
         >

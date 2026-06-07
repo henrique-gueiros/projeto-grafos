@@ -4,12 +4,6 @@ import {
 import { Network } from 'vis-network'
 import { DataSet } from 'vis-data'
 
-// cores das camadas BFS (destaque de algoritmo)
-const LAYER_COLORS = [
-  '#ffd54f', '#4fc3f7', '#81c784', '#ff8a65',
-  '#b39ddb', '#f06292', '#4dd0e1', '#aed581',
-]
-
 const DIM_OPACITY = 0.14
 const DIM_EDGE = { color: '#1a1a28', opacity: 0.08 }
 const NEIGH_EDGE = { color: '#4fc3f7', opacity: 0.9 }

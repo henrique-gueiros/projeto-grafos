@@ -11,25 +11,7 @@ api.interceptors.response.use(
   },
 )
 
-export const getStatus = () => api.get('/status').then((r) => r.data)
-
-export const uploadFile = (tipo, file) => {
-  const fd = new FormData()
-  fd.append('file', file)
-  return api.post(`/upload/${tipo}`, fd).then((r) => r.data)
-}
-
-export const runGerar = () => api.post('/run/gerar').then((r) => r.data)
-export const runMetricas = () => api.post('/run/metricas').then((r) => r.data)
-export const runDistancias = () => api.post('/run/distancias').then((r) => r.data)
-export const runViz = () => api.post('/run/viz').then((r) => r.data)
-
 export const getGraphData = () => api.get('/data/graph').then((r) => r.data)
-export const getMetrics = () => api.get('/data/metrics').then((r) => r.data)
-export const getRegions = () => api.get('/data/regions').then((r) => r.data)
-export const getGrades = () => api.get('/data/grades').then((r) => r.data)
-export const getEgo = () => api.get('/data/ego').then((r) => r.data)
-export const getRoutes = () => api.get('/data/routes').then((r) => r.data)
 
 export const runAlgorithm = (params) => api.post('/algorithm', params).then((r) => r.data)
 

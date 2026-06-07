@@ -10,10 +10,23 @@ import { REGION_HEX } from '../components/GraphViewer.jsx'
 
 const REGIONS = ['Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste']
 
-const BAR_COLORS = [
-  '#818cf8', '#a78bfa', '#c084fc', '#e879f9',
-  '#f472b6', '#fb7185', '#fda4af', '#fca5a1',
+// Gestalt similarity: same tier = same color; warm → cool = more connected → less connected
+// Thresholds derived from natural breaks in the data (grau 19 / 8 / 5-6)
+const HUB_TIERS = [
+  { label: 'Hub Nacional',       color: '#ef4444', minGrau: 15 },
+  { label: 'Hub Regional',       color: '#f97316', minGrau: 7  },
+  { label: 'Aeroporto Regional', color: '#14b8a6', minGrau: 0  },
 ]
+
+// Escada crescente de aeroportos: frio → quente dentro do espectro azul-roxo
+const BLUE_PURPLE_RAMP = ['#7dd3fc', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc']
+
+function getHubTier(grau) {
+  for (const t of HUB_TIERS) {
+    if (grau >= t.minGrau) return t
+  }
+  return HUB_TIERS[HUB_TIERS.length - 1]
+}
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -27,6 +40,34 @@ function ChartTooltip({ active, payload, label }) {
             : p.value}</b>
         </p>
       ))}
+    </div>
+  )
+}
+
+function Top15Tooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  const d = payload[0]?.payload
+  return (
+    <div className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-xs shadow-xl">
+      <p className="font-bold text-sm text-white mb-1">{label}</p>
+      {d?.tier && <p className="mb-0.5" style={{ color: d.tierColor }}>{d.tier}</p>}
+      <p style={{ color: payload[0]?.fill ?? '#94a3b8' }}>
+        Grau: <b>{payload[0]?.value}</b>
+      </p>
+    </div>
+  )
+}
+
+function DegreeTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  const d = payload[0]?.payload
+  return (
+    <div className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-xs shadow-xl">
+      <p className="font-bold text-sm text-white mb-1">Grau {label}</p>
+      {d?.tier && <p className="mb-0.5" style={{ color: d.tierColor }}>{d.tier}</p>}
+      <p style={{ color: payload[0]?.fill ?? '#94a3b8' }}>
+        Aeroportos: <b>{payload[0]?.value}</b>
+      </p>
     </div>
   )
 }
@@ -90,7 +131,11 @@ export default function Dashboard() {
     visibleNodes
       .map((n) => ({ iata: n.id, regiao: n.regiao, grau: degreeMap[n.id] ?? 0 }))
       .sort((a, b) => b.grau - a.grau)
-      .slice(0, 15),
+      .slice(0, 15)
+      .map((n) => {
+        const t = getHubTier(n.grau)
+        return { ...n, tier: t.label, tierColor: t.color }
+      }),
     [visibleNodes, degreeMap],
   )
 
@@ -101,7 +146,11 @@ export default function Dashboard() {
       freq[g] = (freq[g] || 0) + 1
     })
     return Object.entries(freq)
-      .map(([g, c]) => ({ grau: Number(g), aeroportos: c }))
+      .map(([g, c]) => {
+        const grau = Number(g)
+        const t = getHubTier(grau)
+        return { grau, aeroportos: c, tier: t.label, tierColor: t.color }
+      })
       .sort((a, b) => a.grau - b.grau)
   }, [visibleNodes, degreeMap])
 
@@ -123,6 +172,31 @@ export default function Dashboard() {
   const regionDensity = useMemo(() =>
     regionStats.map((r) => ({ regiao: r.regiao, densidade: r.densidade })),
     [regionStats],
+  )
+
+  const globalDensity = useMemo(() => {
+    const n = visibleNodes.length
+    const e = visibleEdges.length
+    return n < 2 ? 0 : parseFloat(((2 * e) / (n * (n - 1))).toFixed(2))
+  }, [visibleNodes, visibleEdges])
+
+  const regionCountRanked = useMemo(() =>
+    [...regionStats].sort((a, b) => a.ordem - b.ordem),
+    [regionStats],
+  )
+
+  const passageirosRanked = useMemo(() =>
+    aviationStats
+      ? [...aviationStats.passageiros_domesticos].sort((a, b) => a.milhoes - b.milhoes)
+      : [],
+    [aviationStats],
+  )
+
+  const cargaRanked = useMemo(() =>
+    aviationStats
+      ? [...aviationStats.carga_aerea].sort((a, b) => a.mil_ton - b.mil_ton)
+      : [],
+    [aviationStats],
   )
 
   const toggleFilter = (val) =>
@@ -190,19 +264,29 @@ export default function Dashboard() {
               Grau = numero de conexoes diretas. Aeroportos com grau alto funcionam como hubs.
             </p>
             {top15.length > 0 ? (
-              <ResponsiveContainer width="100%" height={380}>
-                <BarChart data={top15} layout="vertical" margin={{ left: 10, right: 24, top: 4, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <YAxis type="category" dataKey="iata" tick={{ fill: '#cbd5e1', fontSize: 11 }} width={44} interval={0} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Bar dataKey="grau" name="Grau" radius={[0, 4, 4, 0]}>
-                    {top15.map((d, i) => (
-                      <Cell key={d.iata} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height={380}>
+                  <BarChart data={top15} layout="vertical" margin={{ left: 10, right: 24, top: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                    <YAxis type="category" dataKey="iata" tick={{ fill: '#cbd5e1', fontSize: 11 }} width={44} interval={0} />
+                    <Tooltip content={<Top15Tooltip />} />
+                    <Bar dataKey="grau" name="Grau" radius={[0, 4, 4, 0]}>
+                      {top15.map((d) => (
+                        <Cell key={d.iata} fill={d.tierColor} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-3 mt-3 justify-center">
+                  {HUB_TIERS.map((t) => (
+                    <span key={t.label} className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <span className="w-3 h-2.5 rounded-sm inline-block" style={{ background: t.color }} />
+                      {t.label}
+                    </span>
+                  ))}
+                </div>
+              </>
             ) : (
               <EmptyChart msg="Sem dados para exibir" />
             )}
@@ -211,28 +295,39 @@ export default function Dashboard() {
           <section className="card">
             <p className="section-title">Quantidade de Aeroportos por Regiao</p>
             <p className="text-xs text-slate-500 mb-4">
-              Numero de aeroportos em cada regiao com base no filtro ativo.
+              Numero de aeroportos por regiao, do menor para o maior. Quanto mais roxo, mais aeroportos.
             </p>
-            {regionStats.length > 0 ? (
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={regionStats} margin={{ left: 0, right: 10, bottom: 24 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis
-                    dataKey="regiao"
-                    tick={{ fill: '#94a3b8', fontSize: 10 }}
-                    angle={-12}
-                    textAnchor="end"
-                    interval={0}
-                  />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Bar dataKey="ordem" name="Aeroportos" radius={[3, 3, 0, 0]}>
-                    {regionStats.map((r) => (
-                      <Cell key={r.regiao} fill={REGION_HEX[r.regiao] ?? '#64748b'} />
+            {regionCountRanked.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={regionCountRanked} margin={{ left: 0, right: 10, bottom: 24 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis
+                      dataKey="regiao"
+                      tick={{ fill: '#94a3b8', fontSize: 10 }}
+                      angle={-12}
+                      textAnchor="end"
+                      interval={0}
+                    />
+                    <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Bar dataKey="ordem" name="Aeroportos" radius={[3, 3, 0, 0]}>
+                      {regionCountRanked.map((r, i) => (
+                        <Cell key={r.regiao} fill={BLUE_PURPLE_RAMP[i] ?? '#64748b'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex items-center gap-2 mt-3 justify-center text-xs text-slate-400">
+                  <span>Menos</span>
+                  <div className="flex gap-0.5">
+                    {BLUE_PURPLE_RAMP.map((c) => (
+                      <span key={c} className="w-4 h-2.5 rounded-sm inline-block" style={{ background: c }} />
                     ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                  </div>
+                  <span>Mais</span>
+                </div>
+              </>
             ) : (
               <EmptyChart msg="Sem dados para exibir" />
             )}
@@ -241,25 +336,39 @@ export default function Dashboard() {
           <section className="card">
             <p className="section-title">Distribuicao de Graus</p>
             <p className="text-xs text-slate-500 mb-4">
-              Frequencia de cada valor de grau entre os aeroportos visiveis. Revela concentracao e outliers.
+              Frequencia de cada valor de grau. Cores iguais ao Top 15: vermelho = Hub Nacional, laranja = Hub Regional, verde = Regional.
             </p>
             {degreeHist.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={degreeHist} margin={{ left: 0, right: 10, bottom: 16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis
-                    dataKey="grau"
-                    label={{ value: 'Grau', position: 'insideBottom', offset: -4, fill: '#64748b', fontSize: 11 }}
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                  />
-                  <YAxis
-                    label={{ value: 'Aeroportos', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11 }}
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                  />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Bar dataKey="aeroportos" name="Aeroportos" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={degreeHist} margin={{ left: 0, right: 10, bottom: 16 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis
+                      dataKey="grau"
+                      label={{ value: 'Grau', position: 'insideBottom', offset: -4, fill: '#64748b', fontSize: 11 }}
+                      tick={{ fill: '#94a3b8', fontSize: 11 }}
+                    />
+                    <YAxis
+                      label={{ value: 'Aeroportos', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11 }}
+                      tick={{ fill: '#94a3b8', fontSize: 11 }}
+                    />
+                    <Tooltip content={<DegreeTooltip />} />
+                    <Bar dataKey="aeroportos" name="Aeroportos" radius={[3, 3, 0, 0]}>
+                      {degreeHist.map((d) => (
+                        <Cell key={d.grau} fill={d.tierColor} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-3 mt-3 justify-center">
+                  {HUB_TIERS.map((t) => (
+                    <span key={t.label} className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <span className="w-3 h-2.5 rounded-sm inline-block" style={{ background: t.color }} />
+                      {t.label}
+                    </span>
+                  ))}
+                </div>
+              </>
             ) : (
               <EmptyChart msg="Sem dados para exibir" />
             )}
@@ -268,7 +377,7 @@ export default function Dashboard() {
           <section className="card">
             <p className="section-title">Densidade por Regiao</p>
             <p className="text-xs text-slate-500 mb-4">
-              Regioes menores tendem a ter maior densidade interna. Formula: 2|E| / (|V|(|V|-1)).
+              Cada regiao forma um clique completo (densidade = 1,0). A linha tracejada marca a densidade global da rede — cruzar regioes sempre exige escala.
             </p>
             {regionDensity.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -281,8 +390,14 @@ export default function Dashboard() {
                     textAnchor="end"
                     interval={0}
                   />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[0, 1.1]} />
                   <Tooltip content={<ChartTooltip />} />
+                  <ReferenceLine
+                    y={globalDensity}
+                    stroke="#f59e0b"
+                    strokeDasharray="4 2"
+                    label={{ value: `Global ≈ ${globalDensity}`, fill: '#f59e0b', fontSize: 10, position: 'insideTopRight' }}
+                  />
                   <Bar dataKey="densidade" name="Densidade" radius={[3, 3, 0, 0]}>
                     {regionDensity.map((r) => (
                       <Cell key={r.regiao} fill={REGION_HEX[r.regiao] ?? '#64748b'} />
@@ -308,49 +423,59 @@ export default function Dashboard() {
               <section className="card">
                 <p className="section-title">Passageiros Domesticos por Regiao</p>
                 <p className="text-xs text-slate-500 mb-4">
-                  Volume de passageiros domesticos transportados em 2023 (milhoes). Destaca o peso
-                  do Sudeste no transporte aéreo nacional.
+                  Volume de passageiros domesticos transportados em 2023 (milhoes), do menor para o maior. Quanto mais roxo, maior o volume.
                 </p>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart
-                    data={[...aviationStats.passageiros_domesticos].sort((a, b) => b.milhoes - a.milhoes)}
-                    margin={{ left: 0, right: 24, bottom: 24 }}
-                  >
+                  <BarChart data={passageirosRanked} margin={{ left: 0, right: 24, bottom: 24 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                     <XAxis dataKey="regiao" tick={{ fill: '#94a3b8', fontSize: 10 }} angle={-12} textAnchor="end" interval={0} />
                     <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} unit=" M" />
                     <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="milhoes" name="Passageiros (M)" radius={[3, 3, 0, 0]}>
-                      {aviationStats.passageiros_domesticos.map((r) => (
-                        <Cell key={r.regiao} fill={REGION_HEX[r.regiao] ?? '#64748b'} />
+                      {passageirosRanked.map((r, i) => (
+                        <Cell key={r.regiao} fill={BLUE_PURPLE_RAMP[i] ?? '#64748b'} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                <div className="flex items-center gap-2 mt-3 justify-center text-xs text-slate-400">
+                  <span>Menos</span>
+                  <div className="flex gap-0.5">
+                    {BLUE_PURPLE_RAMP.map((c) => (
+                      <span key={c} className="w-4 h-2.5 rounded-sm inline-block" style={{ background: c }} />
+                    ))}
+                  </div>
+                  <span>Mais</span>
+                </div>
               </section>
 
               <section className="card">
                 <p className="section-title">Volume de Carga Aerea por Regiao</p>
                 <p className="text-xs text-slate-500 mb-4">
-                  Carga transportada em 2023 (mil toneladas). O Sudeste concentra a logistica de
-                  exportacao via GRU; o Centro-Oeste reflete o agronegocio.
+                  Carga transportada em 2023 (mil toneladas), do menor para o maior. Quanto mais roxo, maior o volume.
                 </p>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart
-                    data={[...aviationStats.carga_aerea].sort((a, b) => b.mil_ton - a.mil_ton)}
-                    margin={{ left: 0, right: 24, bottom: 24 }}
-                  >
+                  <BarChart data={cargaRanked} margin={{ left: 0, right: 24, bottom: 24 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                     <XAxis dataKey="regiao" tick={{ fill: '#94a3b8', fontSize: 10 }} angle={-12} textAnchor="end" interval={0} />
                     <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} unit=" kt" />
                     <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="mil_ton" name="Carga (mil t)" radius={[3, 3, 0, 0]}>
-                      {aviationStats.carga_aerea.map((r) => (
-                        <Cell key={r.regiao} fill={REGION_HEX[r.regiao] ?? '#64748b'} />
+                      {cargaRanked.map((r, i) => (
+                        <Cell key={r.regiao} fill={BLUE_PURPLE_RAMP[i] ?? '#64748b'} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                <div className="flex items-center gap-2 mt-3 justify-center text-xs text-slate-400">
+                  <span>Menos</span>
+                  <div className="flex gap-0.5">
+                    {BLUE_PURPLE_RAMP.map((c) => (
+                      <span key={c} className="w-4 h-2.5 rounded-sm inline-block" style={{ background: c }} />
+                    ))}
+                  </div>
+                  <span>Mais</span>
+                </div>
               </section>
 
               <section className="card xl:col-span-2">
