@@ -7,6 +7,11 @@ import {
 import { getNbaStats, getNbaReport } from '../api.js'
 
 const TIER_PALETTE = ['#ffd54f', '#ff8a65', '#4fc3f7', '#81c784', '#b39ddb', '#f06292', '#4dd0e1', '#aed581']
+const CATEGORICAL_15 = [
+  '#38bdf8', '#34d399', '#fbbf24', '#f87171', '#a78bfa',
+  '#fb923c', '#e879f9', '#4ade80', '#facc15', '#60a5fa',
+  '#f472b6', '#2dd4bf', '#c084fc', '#86efac', '#fca5a1',
+]
 const ALGO_COLORS = {
   BFS: '#4fc3f7',
   DFS: '#81c784',
@@ -157,7 +162,9 @@ export default function NbaDashboard() {
                   <YAxis type="category" dataKey="nome" tick={{ fill: '#cbd5e1', fontSize: 10 }} width={110} interval={0} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="grau" name="Grau entrada" radius={[0, 4, 4, 0]}>
-                    {stats.top_recebedores.map((d) => <Cell key={d.nome} fill="#f06292" />)}
+                    {stats.top_recebedores.map((d, i) => (
+                      <Cell key={d.nome} fill={CATEGORICAL_15[i % CATEGORICAL_15.length]} />
+                    ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -211,7 +218,11 @@ export default function NbaDashboard() {
                   <XAxis dataKey="faixa" tick={{ fill: '#94a3b8', fontSize: 10 }} angle={-15} textAnchor="end" interval={0} />
                   <YAxis scale="log" domain={[1, 'auto']} allowDataOverflow tick={{ fill: '#94a3b8', fontSize: 11 }} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Bar dataKey="freq" name="Arestas" fill="#4fc3f7" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="freq" name="Arestas" radius={[3, 3, 0, 0]}>
+                    {stats.weight_hist.map((d, i) => (
+                      <Cell key={d.faixa} fill={CATEGORICAL_15[i % CATEGORICAL_15.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : <EmptyChart msg="Carregando…" />}

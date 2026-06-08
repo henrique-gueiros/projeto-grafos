@@ -237,17 +237,25 @@ def _run_bellman_ford(g) -> list[dict]:
 # Visualizações
 # ---------------------------------------------------------------------------
 
-DARK_BG = "#0f0f1a"
-PANEL_BG = "#1a1a2a"
-TEXT_COLOR = "#e0e0e0"
-GRID_COLOR = "#2e2e42"
+DARK_BG  = "#0d0d18"
+PANEL_BG = "#16162a"
+TEXT_COLOR  = "#dde1f0"
+MUTED_COLOR = "#6b7194"
+GRID_COLOR  = "#252540"
 
 ALGO_COLORS = {
-    "BFS": "#4fc3f7",
-    "DFS": "#81c784",
-    "Dijkstra": "#ffb74d",
-    "Bellman-Ford": "#f06292",
+    "BFS":          "#38bdf8",
+    "DFS":          "#34d399",
+    "Dijkstra":     "#fbbf24",
+    "Bellman-Ford": "#f87171",
 }
+COLOR_OUT    = "#fbbf24"
+COLOR_IN     = "#38bdf8"
+COLOR_WEIGHT = "#a78bfa"
+
+COLOR_P50 = "#34d399"
+COLOR_P90 = "#fbbf24"
+COLOR_P99 = "#f87171"
 
 
 def _style_ax(ax):
@@ -258,27 +266,29 @@ def _style_ax(ax):
     ax.title.set_color(TEXT_COLOR)
     for spine in ax.spines.values():
         spine.set_edgecolor(GRID_COLOR)
-    ax.grid(color=GRID_COLOR, linestyle="--", linewidth=0.5, alpha=0.6)
+    ax.grid(color=GRID_COLOR, linestyle="--", linewidth=0.4, alpha=0.7)
 
 
 def _viz_degree_distribution(g, out_path: Path) -> None:
     out_deg = sorted([g.out_degree(n) for n in g.nodes if g.out_degree(n) > 0])
-    in_deg = sorted([g.in_degree(n) for n in g.nodes if g.in_degree(n) > 0])
+    in_deg  = sorted([g.in_degree(n)  for n in g.nodes if g.in_degree(n)  > 0])
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5), facecolor=DARK_BG)
-    fig.suptitle("Distribuição de Graus — Rede NBA", color=TEXT_COLOR, fontsize=13)
+    fig.suptitle("Distribuição de Graus — Rede NBA", color=TEXT_COLOR, fontsize=13, y=1.01)
 
     for ax, degrees, label, color in [
-        (axes[0], out_deg, "Grau de Saída (out-degree)", "#4fc3f7"),
-        (axes[1], in_deg, "Grau de Entrada (in-degree)", "#f06292"),
+        (axes[0], out_deg, "Grau de Saída (out-degree)",   COLOR_OUT),
+        (axes[1], in_deg,  "Grau de Entrada (in-degree)", COLOR_IN),
     ]:
         _style_ax(ax)
-        counts = {}
+        counts: dict[int, int] = {}
         for d in degrees:
             counts[d] = counts.get(d, 0) + 1
         xs = list(counts.keys())
         ys = list(counts.values())
-        ax.scatter(xs, ys, s=8, color=color, alpha=0.6)
+        max_y = max(ys)
+        sizes = [max(4, min(60, 4 + int((y / max_y) ** 0.4 * 56))) for y in ys]
+        ax.scatter(xs, ys, s=sizes, color=color, alpha=0.65, edgecolors="none")
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_xlabel(label)
@@ -299,16 +309,30 @@ def _viz_top_passadores(g, out_path: Path, top_n: int = 15) -> None:
 
     labels = [x[0] for x in reversed(out_deg)]
     values = [x[1] for x in reversed(out_deg)]
+    n = len(values)
+    max_v = values[-1]
+
+    bar_alphas  = [0.45 + 0.55 * (i / (n - 1)) for i in range(n)]
+    bar_colors  = [(251/255, 191/255, 36/255, a) for a in bar_alphas]
 
     fig, ax = plt.subplots(figsize=(10, 6), facecolor=DARK_BG)
     _style_ax(ax)
-    colors = plt.cm.YlOrRd(np.linspace(0.4, 0.9, len(labels)))
-    ax.barh(labels, values, color=colors)
+    bars = ax.barh(labels, values, color=bar_colors, height=0.65)
+
+    bars[-1].set_edgecolor("#ffffff")
+    bars[-1].set_linewidth(1.2)
+
     ax.set_xlabel("Grau de Saída (nº de parceiros a quem assistiu)")
     ax.set_title(f"Top {top_n} Passadores — Rede NBA", color=TEXT_COLOR)
-    for i, v in enumerate(values):
-        ax.text(v + 2, i, str(v), va="center", color=TEXT_COLOR, fontsize=8)
 
+    for i, (bar, v) in enumerate(zip(bars, values)):
+        txt_color = "#ffffff" if i == n - 1 else TEXT_COLOR
+        ax.text(v + max_v * 0.01, bar.get_y() + bar.get_height() / 2,
+                str(v), va="center", color=txt_color,
+                fontsize=9 if i == n - 1 else 8,
+                fontweight="bold" if i == n - 1 else "normal")
+
+    ax.set_xlim(0, max_v * 1.12)
     plt.tight_layout()
     plt.savefig(out_path, dpi=120, bbox_inches="tight", facecolor=DARK_BG)
     plt.close()
@@ -316,41 +340,46 @@ def _viz_top_passadores(g, out_path: Path, top_n: int = 15) -> None:
 
 
 def _viz_comparacao_algoritmos(bfs_res, dfs_res, dijkstra_res, bf_res, out_path: Path) -> None:
-    labels = []
-    times = []
-    colors = []
+    groups = [
+        ("BFS",          bfs_res,      [f"BFS\n{r['source'].split()[-1]}"                         for r in bfs_res],      [r["time_ms"] for r in bfs_res]),
+        ("DFS",          dfs_res,      [f"DFS\n{r['source'].split()[-1]}"                         for r in dfs_res],      [r["time_ms"] for r in dfs_res]),
+        ("Dijkstra",     dijkstra_res, [f"Dijk\n{r['source'].split()[-1]}→{r['target'].split()[-1]}" for r in dijkstra_res], [r["time_ms"] for r in dijkstra_res]),
+        ("Bellman-Ford", bf_res,       [f"BF\n{'s/ciclo' if 'sem' in r['case'] else 'c/ciclo'}"  for r in bf_res],       [r["time_ms"] for r in bf_res]),
+    ]
 
-    for r in bfs_res:
-        labels.append(f"BFS\n{r['source'].split()[-1]}")
-        times.append(r["time_ms"])
-        colors.append(ALGO_COLORS["BFS"])
+    labels: list[str] = []
+    times:  list[float] = []
+    colors: list[str] = []
+    group_spans: list[tuple[int, int, str]] = []
+    GAP = 0.8
+    pos = 0.0
+    bar_positions: list[float] = []
 
-    for r in dfs_res:
-        labels.append(f"DFS\n{r['source'].split()[-1]}")
-        times.append(r["time_ms"])
-        colors.append(ALGO_COLORS["DFS"])
-
-    for r in dijkstra_res:
-        lbl = f"Dijk\n{r['source'].split()[-1]}→{r['target'].split()[-1]}"
-        labels.append(lbl)
-        times.append(r["time_ms"])
-        colors.append(ALGO_COLORS["Dijkstra"])
-
-    for r in bf_res:
-        case_lbl = "s/ciclo" if "sem" in r["case"] else "c/ciclo"
-        labels.append(f"BF\n{case_lbl}")
-        times.append(r["time_ms"])
-        colors.append(ALGO_COLORS["Bellman-Ford"])
+    for algo_name, _, grp_labels, grp_times in groups:
+        start = pos
+        for lbl, t in zip(grp_labels, grp_times):
+            bar_positions.append(pos)
+            labels.append(lbl)
+            times.append(t)
+            colors.append(ALGO_COLORS[algo_name])
+            pos += 1.0
+        group_spans.append((start, pos - 1.0, algo_name))
+        pos += GAP
 
     fig, ax = plt.subplots(figsize=(14, 5), facecolor=DARK_BG)
     _style_ax(ax)
-    xs = range(len(labels))
-    ax.bar(xs, times, color=colors, alpha=0.85)
+
+    for x_start, x_end, algo_name in group_spans:
+        ax.axvspan(x_start - 0.45, x_end + 0.45,
+                   facecolor=ALGO_COLORS[algo_name], alpha=0.06, zorder=0)
+
+    ax.bar(bar_positions, times, width=0.7, color=colors, alpha=0.88, zorder=2)
     ax.set_yscale("log")
-    ax.set_xticks(list(xs))
-    ax.set_xticklabels(labels, fontsize=7.5)
+    ax.set_xticks(bar_positions)
+    ax.set_xticklabels(labels, fontsize=7.5, color=TEXT_COLOR)
     ax.set_ylabel("Tempo (ms) — escala log")
     ax.set_title("Comparação de Desempenho dos Algoritmos", color=TEXT_COLOR)
+    ax.set_xlim(-0.6, pos - GAP + 0.6)
 
     legend_patches = [
         mpatches.Patch(color=c, label=algo)
@@ -373,16 +402,21 @@ def _viz_weight_distribution(g, out_path: Path) -> None:
 
     fig, ax = plt.subplots(figsize=(10, 5), facecolor=DARK_BG)
     _style_ax(ax)
-    ax.hist(weights, bins=80, color="#4fc3f7", alpha=0.7, edgecolor=DARK_BG, linewidth=0.3)
+    ax.hist(weights, bins=80, color=COLOR_WEIGHT, alpha=0.55,
+            edgecolor=DARK_BG, linewidth=0.2)
     ax.set_yscale("log")
     ax.set_xscale("log")
     ax.set_xlabel("Weight (pontos gerados via assistência)")
     ax.set_ylabel("Frequência (log)")
     ax.set_title("Distribuição de Weights — Rede NBA", color=TEXT_COLOR)
 
-    for pct, val, col in [(50, p50, "#ffb74d"), (90, p90, "#f06292"), (99, p99, "#ce93d8")]:
-        ax.axvline(val, color=col, linestyle="--", linewidth=1.2,
-                   label=f"P{pct}={int(val)}")
+    for pct, val, col, ls in [
+        (50, p50, COLOR_P50, "-"),
+        (90, p90, COLOR_P90, "--"),
+        (99, p99, COLOR_P99, ":"),
+    ]:
+        ax.axvline(val, color=col, linestyle=ls, linewidth=1.5,
+                   label=f"P{pct} = {int(val)}")
 
     ax.legend(facecolor=PANEL_BG, edgecolor=GRID_COLOR, labelcolor=TEXT_COLOR, fontsize=9)
     plt.tight_layout()
@@ -391,32 +425,75 @@ def _viz_weight_distribution(g, out_path: Path) -> None:
     print(f"  Salvo: {out_path}")
 
 
+_CATEGORICAL_15 = [
+    "#38bdf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa",
+    "#fb923c", "#e879f9", "#4ade80", "#facc15", "#60a5fa",
+    "#f472b6", "#2dd4bf", "#c084fc", "#86efac", "#fca5a1",
+]
+
+
+def _viz_top_recebedores(g, out_path: Path, top_n: int = 15) -> None:
+    in_deg = sorted(
+        [(n, g.in_degree(n)) for n in g.nodes],
+        key=lambda x: -x[1],
+    )[:top_n]
+
+    labels = [x[0] for x in reversed(in_deg)]
+    values = [x[1] for x in reversed(in_deg)]
+    n = len(values)
+    max_v = values[-1]
+
+    bar_colors = _CATEGORICAL_15[:n]
+
+    fig, ax = plt.subplots(figsize=(10, 6), facecolor=DARK_BG)
+    _style_ax(ax)
+    bars = ax.barh(labels, values, color=bar_colors, height=0.65, alpha=0.88)
+
+    bars[-1].set_edgecolor("#ffffff")
+    bars[-1].set_linewidth(1.2)
+
+    ax.set_xlabel("Grau de Entrada (nº de parceiros que assistiram)")
+    ax.set_title(f"Top {top_n} Recebedores — Rede NBA", color=TEXT_COLOR)
+
+    for i, (bar, v) in enumerate(zip(bars, values)):
+        txt_color = "#ffffff" if i == n - 1 else TEXT_COLOR
+        ax.text(v + max_v * 0.01, bar.get_y() + bar.get_height() / 2,
+                str(v), va="center", color=txt_color,
+                fontsize=9 if i == n - 1 else 8,
+                fontweight="bold" if i == n - 1 else "normal")
+
+    ax.set_xlim(0, max_v * 1.12)
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=120, bbox_inches="tight", facecolor=DARK_BG)
+    plt.close()
+    print(f"  Salvo: {out_path}")
+
+
 def _viz_bfs_layers(bfs_res, out_path: Path) -> None:
-    """Gráfico de barras empilhadas mostrando camadas BFS por fonte."""
     fig, ax = plt.subplots(figsize=(10, 5), facecolor=DARK_BG)
     _style_ax(ax)
 
     max_layers = max(len(r["layer_sizes"]) for r in bfs_res)
-    palette = plt.cm.Blues(np.linspace(0.3, 0.9, max_layers))
+    palette = plt.cm.YlGnBu(np.linspace(0.18, 0.92, max_layers))
     x = np.arange(len(bfs_res))
-    bar_width = 0.5
+    bar_width = 0.55
     bottom = np.zeros(len(bfs_res))
 
     for layer_idx in range(max_layers):
-        vals = []
-        for r in bfs_res:
-            sizes = r["layer_sizes"]
-            vals.append(sizes[layer_idx] if layer_idx < len(sizes) else 0)
+        vals = [
+            r["layer_sizes"][layer_idx] if layer_idx < len(r["layer_sizes"]) else 0
+            for r in bfs_res
+        ]
         ax.bar(x, vals, bar_width, bottom=bottom,
-               color=palette[layer_idx], label=f"Camada {layer_idx}")
+               color=palette[layer_idx], label=f"Camada {layer_idx}", zorder=2)
         bottom += np.array(vals)
 
     ax.set_xticks(x)
     ax.set_xticklabels([r["source"] for r in bfs_res], color=TEXT_COLOR, fontsize=9)
     ax.set_ylabel("Nós por camada")
     ax.set_title("Camadas BFS por Fonte", color=TEXT_COLOR)
-    ax.legend(facecolor=PANEL_BG, edgecolor=GRID_COLOR, labelcolor=TEXT_COLOR, fontsize=8,
-              loc="upper right")
+    ax.legend(facecolor=PANEL_BG, edgecolor=GRID_COLOR, labelcolor=TEXT_COLOR,
+              fontsize=8, loc="upper right", ncol=2)
     plt.tight_layout()
     plt.savefig(out_path, dpi=120, bbox_inches="tight", facecolor=DARK_BG)
     plt.close()
@@ -1128,6 +1205,7 @@ def solve_parte2(root: Path | None = None, verbose: bool = True) -> None:
 
     _viz_degree_distribution(g, out / "parte2_distribuicao_graus.png")
     _viz_top_passadores(g, out / "parte2_top_passadores.png")
+    _viz_top_recebedores(g, out / "parte2_top_recebedores.png")
     _viz_comparacao_algoritmos(
         bfs_results, dfs_results, dijkstra_results, bf_results,
         out / "parte2_comparacao_algoritmos.png",
