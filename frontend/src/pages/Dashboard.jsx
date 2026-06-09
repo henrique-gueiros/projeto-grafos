@@ -7,6 +7,7 @@ import {
 } from 'recharts'
 import { getGraphData, getAviationStats } from '../api.js'
 import { REGION_HEX } from '../components/GraphViewer.jsx'
+import InsightModal from '../components/InsightModal.jsx'
 
 const REGIONS = ['Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste']
 
@@ -259,7 +260,19 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
           <section className="card">
-            <p className="section-title">Top 15 Aeroportos Mais Conectados</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="section-title mb-0">Top 15 Aeroportos Mais Conectados</p>
+              <InsightModal
+                title="Hubs Aeroportuários"
+                icon="✈️"
+                accent="#ef4444"
+                insight={`GRU (Guarulhos), GIG (Galeão) e BSB (Brasília) são os três hubs nacionais definidos no modelo: cada um conecta-se a todos os demais aeroportos, independente da região. Isso os torna os nós mais críticos da rede — sua remoção quebraria a conectividade global.
+
+Hubs Regionais (grau 7–14) atuam como pontes locais: cada região tem pelo menos um aeroporto que concentra as ligações intra-regionais e serve de antessala para os hubs nacionais.
+
+A diferença de grau entre aeroportos regionais comuns (grau 4–6) e os hubs nacionais (grau 15+) reflete o modelo híbrido adotado: clique regional + ligações hub. Isso garante conectividade máxima com um número mínimo de arestas.`}
+              />
+            </div>
             <p className="text-xs text-slate-500 mb-4">
               Grau = numero de conexoes diretas. Aeroportos com grau alto funcionam como hubs.
             </p>
@@ -293,7 +306,19 @@ export default function Dashboard() {
           </section>
 
           <section className="card">
-            <p className="section-title">Quantidade de Aeroportos por Regiao</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="section-title mb-0">Quantidade de Aeroportos por Regiao</p>
+              <InsightModal
+                title="Distribuição Regional"
+                icon="🗺️"
+                accent="#a78bfa"
+                insight={`O Nordeste concentra o maior número de aeroportos do modelo (6), refletindo a extenso litoral e a demanda turística de estados como Bahia, Ceará e Pernambuco. O Sul, com 3 aeroportos, é a região mais compacta — mas altamente interconectada graas ao clique regional.
+
+Centro-Oeste tem apenas 2 aeroportos (BSB e GYN), mas ambos são estratégicos: BSB é um hub nacional e GYN serve como anteposto para o interior. A razão de densidade dessas regiões menores é 1,0 (clique completo).
+
+Essa distribuição não é proporcional ao PIB regional: o Sudeste, que responde por ~53% do PIB nacional, tem 5 aeroportos — mas seus 3 hubs nacionais compensam numericamente com grau altamente superior.`}
+              />
+            </div>
             <p className="text-xs text-slate-500 mb-4">
               Numero de aeroportos por regiao, do menor para o maior. Quanto mais roxo, mais aeroportos.
             </p>
@@ -334,7 +359,19 @@ export default function Dashboard() {
           </section>
 
           <section className="card">
-            <p className="section-title">Distribuicao de Graus</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="section-title mb-0">Distribuicao de Graus</p>
+              <InsightModal
+                title="Distribuição de Graus — Topologia da Rede"
+                icon="📊"
+                accent="#f97316"
+                insight={`O histograma de graus revela três grupos naturais na rede: aeroportos de grau baixo (regionais sem ligações hub), grau médio (hubs regionais com algumas ligações inter-regionais) e grau alto (hubs nacionais com conectividade universal).
+
+A maioria dos aeroportos cai na faixa de grau 4–6: eles formam clôs regionais densas, mas dependem dos hubs para alcançar outras regiões. Esse é o padrão esperado em redes hierárquicas como malhas aeroviárias.
+
+Junto com o gráfico de Top 15, este gráfico confirma que a rede não é aleatória (que teria uma distribuição de Poisson) — é estruturada e proposital. A escolha do modelo híbrido (regional + hub) cria exatamente esta bimodalidade.`}
+              />
+            </div>
             <p className="text-xs text-slate-500 mb-4">
               Frequencia de cada valor de grau. Cores iguais ao Top 15: vermelho = Hub Nacional, laranja = Hub Regional, verde = Regional.
             </p>
@@ -375,7 +412,19 @@ export default function Dashboard() {
           </section>
 
           <section className="card">
-            <p className="section-title">Densidade por Regiao</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="section-title mb-0">Densidade por Regiao</p>
+              <InsightModal
+                title="Densidade Regional vs. Global"
+                icon="🔗"
+                accent="#14b8a6"
+                insight={`Todas as regiões têm densidade intra-regional de 1,0 por design: o modelo conecta todos os aeroportos da mesma região em um clique completo. Isso garante que qualquer aeroporto regional alcance outro da mesma região em exatamente 1 salto.
+
+A linha tracejada representa a densidade global da rede, muito inferior a 1,0. Essa diferença brutal ilustra o princípio estrutural: é fácil voar dentro de uma região, mas cruzar regiões exige obrigatoriamente passar por um hub nacional.
+
+Essa arquitetura reduz o número total de arestas necessárias (eficiência de armazenamento e processamento) ao mesmo tempo que mantém a conectividade universal, um trade-off clássico em design de redes.`}
+              />
+            </div>
             <p className="text-xs text-slate-500 mb-4">
               Cada regiao forma um clique completo (densidade = 1,0). A linha tracejada marca a densidade global da rede — cruzar regioes sempre exige escala.
             </p>
@@ -421,7 +470,19 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
               <section className="card">
-                <p className="section-title">Passageiros Domesticos por Regiao</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="section-title mb-0">Passageiros Domesticos por Regiao</p>
+                  <InsightModal
+                    title="Passageiros Domésticos"
+                    icon="👥"
+                    accent="#60a5fa"
+                    insight={`O Sudeste domina o volume de passageiros domésticos, concentrando os dois maiores aeroportos do Brasil (GRU e GIG). Essa supremacia reflete tanto a densidade populacional da região quanto sua função de hub de transferência: muitos voos de outras regiões fazem escala em São Paulo ou Rio antes de seguir ao destino final.
+
+O Nordeste surge em segundo lugar, impulsionado principalmente pelo turismo. Isso cria um padrão sazonal interessante: a conectividade da região é alta em número de aeroportos, mas moderada em volume, pois os passageiros se distribuem por mais destinos com menos concentração por nó.
+
+Compare com o gráfico de densidade: regiões com menos aeroportos (Sul, Centro-Oeste) têm alta densidade interna, mas participam de um volume proporcional menor de passageiros totais.`}
+                  />
+                </div>
                 <p className="text-xs text-slate-500 mb-4">
                   Volume de passageiros domesticos transportados em 2023 (milhoes), do menor para o maior. Quanto mais roxo, maior o volume.
                 </p>
@@ -450,7 +511,19 @@ export default function Dashboard() {
               </section>
 
               <section className="card">
-                <p className="section-title">Volume de Carga Aerea por Regiao</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="section-title mb-0">Volume de Carga Aerea por Regiao</p>
+                  <InsightModal
+                    title="Carga Aérea Regional"
+                    icon="📦"
+                    accent="#818cf8"
+                    insight={`O Sudeste concentra a esmagadora maioria da carga aérea doméstica, refletindo a localização do principal centro logístico do país (GRU/Viracopos). A carga aérea é ainda mais concentrada geograficamente do que os passageiros: enquanto passageiros se distribuem por destinos turísticos, a carga segue rotas industriais e comerciais.
+
+O Norte e o Centro-Oeste, apesar de suas vastões territórios, transportam volume relativamente pequeno. Isso evidencia a dependência dessas regiões de modais terrestres e fluviais para distribuição interna.
+
+Um insight importante de grafos: a centralidade de carga aérea num único hub (GRU) torna a rede de logística aérea altamente vulnerável. Uma interrupção em Guarulhos afetaria todo o fluxo nacional de carga express.`}
+                  />
+                </div>
                 <p className="text-xs text-slate-500 mb-4">
                   Carga transportada em 2023 (mil toneladas), do menor para o maior. Quanto mais roxo, maior o volume.
                 </p>
@@ -479,7 +552,19 @@ export default function Dashboard() {
               </section>
 
               <section className="card xl:col-span-2">
-                <p className="section-title">Evolucao de Voos por Regiao (2019–2023)</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="section-title mb-0">Evolucao de Voos por Regiao (2019–2023)</p>
+                  <InsightModal
+                    title="Impacto da Pandemia e Recuperação"
+                    icon="📉"
+                    accent="#ef4444"
+                    insight={`O colapso de 2020 é visível em todas as regiões: a pandemia de COVID-19 reduziu o número de voos domésticos em até 80% em relação ao pico de 2019. Nenhuma região foi poupada, mas a recuperação foi diferenciada.
+
+O Sudeste recuperou mais rápido, apoiado pela demanda corporativa e pela diversidade de destinos. O Norte, que depende fortemente da aviação como meio de transporte primário (dada a ausência de estradas), viu uma recuperação mais lenta por conta da fragilidade econômica regional.
+
+Do ponto de vista de grafos, a pandemia simulou um ataque coordenado a todos os nós simultaneamente: ao contrário de falhas pontuais (remoção de um hub), o colapso foi sistêmico. A recuperação diferenciada mostra que hubs nacionais se restabelecem antes de aeroportos regionais.`}
+                  />
+                </div>
                 <p className="text-xs text-slate-500 mb-4">
                   Numero de voos domesticos (mil) por ano. Evidencia o impacto da pandemia em 2020
                   e a recuperacao diferenciada entre regioes.
@@ -510,7 +595,19 @@ export default function Dashboard() {
               </section>
 
               <section className="card xl:col-span-2">
-                <p className="section-title">PIB Regional x Conectividade Aerea</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="section-title mb-0">PIB Regional x Conectividade Aerea</p>
+                  <InsightModal
+                    title="PIB vs. Conectividade"
+                    icon="💰"
+                    accent="#34d399"
+                    insight={`O gráfico de dispersão revela uma correlação positiva entre PIB regional e volume de voos: regiões mais ricas geram e atraem mais tráfego aéreo. O tamanho de cada bolha representa o número de aeroportos no modelo.
+
+O Sudeste é um outlier duplo: maior PIB E maior volume de voos. O Norte apresenta o caso inverso interessante: PIB baixo, mas volume de voos não desprezível, evidenciando o papel estratégico-social da aviação como único modal viável em regiões amazônicas.
+
+Essa relação sugere que a rede de aeroportos modelada, embora baseada em conexões geográficas e estruturais, reflete indiretamente a realidade econômica do país: infraestrutura aérea e desenvolvimento regional se reforçam mutuamente.`}
+                  />
+                </div>
                 <p className="text-xs text-slate-500 mb-4">
                   Relacao entre PIB (bilhoes BRL, 2022) e numero de voos domesticos (mil, 2023)
                   por regiao. Regioes com maior PIB tendem a concentrar mais rotas aereas.

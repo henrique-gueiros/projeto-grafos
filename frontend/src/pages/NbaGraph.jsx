@@ -369,10 +369,11 @@ export default function NbaGraph() {
                 />
                 <div className="grid grid-cols-2 gap-1.5">
                   {[
-                    { id: 'BFS', label: 'BFS', color: '#4fc3f7' },
-                    { id: 'DFS', label: 'DFS', color: '#81c784' },
-                    { id: 'DIJKSTRA', label: 'Dijkstra', color: '#ffb74d' },
-                    { id: 'BELLMAN-FORD', label: 'Bellman-Ford', color: '#f06292' },
+                    // Gestalt Similaridade: mesmas cores do Dashboard — BFS=azul, DFS=verde, Dijkstra=âmbar, BF=rosa
+                    { id: 'BFS', label: 'BFS', color: '#38bdf8' },
+                    { id: 'DFS', label: 'DFS', color: '#4ade80' },
+                    { id: 'DIJKSTRA', label: 'Dijkstra', color: '#fbbf24' },
+                    { id: 'BELLMAN-FORD', label: 'Bellman-Ford', color: '#f472b6' },
                   ].map((a) => {
                     const on = activeAlg === a.id
                     return (
