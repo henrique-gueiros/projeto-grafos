@@ -10,7 +10,7 @@ build/
 venv/
 env/
 venv
-
+.claude/
 # IDEs
 .vscode/
 .idea/
