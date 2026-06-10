@@ -398,7 +398,7 @@ export default function Home() {
                     ))}
                     <button
                       disabled
-                      title="Bellman-Ford não se aplica aqui: grafo não-dirigido com pesos não-negativos."
+                      title="Bellman-Ford não se aplica aqui: grafo não-dirigido com pesos não-negativos. Veja a demonstração na Parte 2."
                       className="neon-btn neon-btn-dim"
                     >
                       BELLMAN

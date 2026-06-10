@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getNbaGraph, runNbaAlgorithm } from '../api.js'
 import NbaGraphViewer from '../components/NbaGraphViewer.jsx'
 import HighlightsModal from '../components/HighlightsModal.jsx'
+import BellmanFordModal from '../components/BellmanFordModal.jsx'
 
 // quadra de basquete desenhada em SVG (fundo temático do grafo)
 const COURT = 'data:image/svg+xml;utf8,' + encodeURIComponent(
@@ -101,6 +102,7 @@ export default function NbaGraph() {
   const [physicsOn, setPhysicsOn] = useState(true)
   const [selectedNode, setSelectedNode] = useState(null)
   const [showHighlights, setShowHighlights] = useState(false)
+  const [showBellman, setShowBellman] = useState(false)
 
   const [source, setSource] = useState('')
   const [target, setTarget] = useState('')
@@ -470,6 +472,20 @@ export default function NbaGraph() {
                       <AlgoResult result={algoResult} />
                     </div>
                   )}
+
+                  <button
+                    onClick={() => setShowBellman(true)}
+                    className="neon-btn neon-btn-pink w-full mt-3"
+                    style={{ letterSpacing: 1 }}
+                    title="Demonstração de Bellman-Ford com pesos negativos simulados (sem ciclo / com ciclo negativo)"
+                  >
+                    ⇄ DEMO · PESOS NEGATIVOS
+                  </button>
+                  <p style={{ fontSize: 10, color: '#1a3a50', fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, lineHeight: 1.6, marginTop: 6 }}>
+                    A rede real só tem pesos positivos (pontos). A demo isola um trecho
+                    com pesos negativos simulados para exercitar Bellman-Ford e a
+                    detecção de ciclo negativo.
+                  </p>
                 </div>
               </div>
             ) : (
@@ -584,6 +600,8 @@ export default function NbaGraph() {
         />
       )}
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+
+      <BellmanFordModal open={showBellman} onClose={() => setShowBellman(false)} graphData={data} />
     </div>
   )
 }
