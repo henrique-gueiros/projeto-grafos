@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getNbaGraph, runNbaAlgorithm } from '../api.js'
 import NbaGraphViewer from '../components/NbaGraphViewer.jsx'
+import HighlightsModal from '../components/HighlightsModal.jsx'
 
 // quadra de basquete desenhada em SVG (fundo temático do grafo)
 const COURT = 'data:image/svg+xml;utf8,' + encodeURIComponent(
@@ -99,6 +100,7 @@ export default function NbaGraph() {
   const [showAllLabels, setShowAllLabels] = useState(false)
   const [physicsOn, setPhysicsOn] = useState(true)
   const [selectedNode, setSelectedNode] = useState(null)
+  const [showHighlights, setShowHighlights] = useState(false)
 
   const [source, setSource] = useState('')
   const [target, setTarget] = useState('')
@@ -128,7 +130,8 @@ export default function NbaGraph() {
 
   const handleSelect = useCallback((node) => {
     setSelectedNode(node)
-    if (node) { setActiveAlg(null) } // clicar num nó tem prioridade
+    setShowHighlights(false)
+    if (node) { setActiveAlg(null) }
   }, [])
 
   const handleSearch = (val) => {
@@ -360,6 +363,23 @@ export default function NbaGraph() {
                   </p>
                 )}
               </div>
+              {selectedNode.tier === 'S' && (
+                <button
+                  onClick={() => setShowHighlights(true)}
+                  style={{
+                    marginTop: 10,
+                    width: '100%', padding: '5px 0', borderRadius: 3, cursor: 'pointer',
+                    fontFamily: "'ui-sans-serif', monospace", fontWeight: 900,
+                    fontSize: 10, letterSpacing: '2px',
+                    border: '1px solid rgba(255,213,79,0.35)',
+                    color: '#ffd54f',
+                    background: 'rgba(255,213,79,0.06)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  ▶ HIGHLIGHTS
+                </button>
+              )}
             </div>
           )}
         </main>
@@ -557,6 +577,12 @@ export default function NbaGraph() {
         </aside>
       </div>
 
+      {showHighlights && selectedNode && (
+        <HighlightsModal
+          playerName={selectedNode.playerName}
+          onClose={() => setShowHighlights(false)}
+        />
+      )}
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   )
