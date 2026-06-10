@@ -1,5 +1,3 @@
-"""Parte 1 — modelagem: ``io`` (CSV) e ``graph`` (objetos Nó/Aresta/Grafo)."""
-
 from importlib import import_module
 
 __all__ = [
@@ -10,7 +8,6 @@ __all__ = [
     "graph_from_csv_files",
     "graph_from_model_files",
 ]
-
 
 def __getattr__(name: str):
     if name == "io":

@@ -1,10 +1,3 @@
-"""
-solve.py — Orquestrador de todas as partes do projeto.
-
-Cada função ``solve_parteN`` executa uma etapa completa e retorna seus
-resultados. Chamado diretamente por ``cli.py``.
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,28 +7,7 @@ from src.graphs.graph import graph_from_csv_files
 from src import metricas as _metricas
 from src import distancias as _distancias
 
-
 def solve_parte3(root: Path | None = None, *, verbose: bool = True) -> dict[str, Any]:
-    """
-    Partes 3 e 4 — Métricas globais, por grupo e rankings de grau.
-
-    Constrói o grafo a partir dos CSVs em disco e calcula:
-      - Grafo completo : ordem, tamanho, densidade  → out/global.json
-      - Subgrafos por região                        → out/regioes.json
-      - Ego-subredes por aeroporto                  → out/ego_aeroportos.csv
-      - Graus e rankings                            → out/graus.csv
-
-    Parâmetros
-    ----------
-    root : Path | None
-        Raiz do repositório. ``None`` → detectado automaticamente.
-    verbose : bool
-        Se True, imprime resumo no stdout.
-
-    Retorna
-    -------
-    dict com chaves ``global``, ``regioes``, ``ego``, ``rankings``, ``arquivos``.
-    """
     grafo = graph_from_csv_files(root=root)
     resultado = _metricas.run(grafo, root)
 
@@ -45,10 +17,9 @@ def solve_parte3(root: Path | None = None, *, verbose: bool = True) -> dict[str,
 
     return resultado
 
-
-# ---------------------------------------------------------------------------
-# Impressão formatada
-# ---------------------------------------------------------------------------
+                                                                             
+                     
+                                                                             
 
 def _print_parte3(resultado: dict[str, Any]) -> None:
     g = resultado["global"]
@@ -90,7 +61,6 @@ def _print_parte3(resultado: dict[str, Any]) -> None:
     for nome, caminho in arquivos.items():
         print(f"  [{nome}]  {caminho}")
 
-
 def _print_parte4(resultado: dict[str, Any]) -> None:
     rankings = resultado["rankings"]
     graus = rankings["graus"]
@@ -116,16 +86,7 @@ def _print_parte4(resultado: dict[str, Any]) -> None:
     )
     print(f"    {dens_apts}")
 
-
 def solve_parte6(root: Path | None = None, *, verbose: bool = True) -> dict[str, Any]:
-    """
-    Parte 6 — Distância entre aeroportos X e Y.
-
-    Lê ``data/rotas.csv``, constrói o grafo e calcula o menor caminho
-    (Dijkstra, pesos da Seção 5) para cada par.
-
-    Saída: out/distancias_rotas.csv
-    """
     grafo = graph_from_csv_files(root=root)
     resultado = _distancias.run(grafo, root)
 
@@ -133,7 +94,6 @@ def solve_parte6(root: Path | None = None, *, verbose: bool = True) -> dict[str,
         _print_parte6(resultado)
 
     return resultado
-
 
 def _print_parte6(resultado: dict[str, Any]) -> None:
     distancias = resultado["distancias"]

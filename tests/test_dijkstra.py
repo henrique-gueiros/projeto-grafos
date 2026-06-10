@@ -2,7 +2,6 @@ import pytest
 from src.graphs.graph import Graph, Node, Edge
 from src.graphs.algorithms import dijkstra, dijkstra_caminho
 
-
 def _graph():
     g = Graph()
     for iata in ["A", "B", "C", "D"]:
@@ -13,24 +12,20 @@ def _graph():
         )
     return g
 
-
 def test_dijkstra_shortest_path():
     custo, caminho = dijkstra_caminho(_graph(), "A", "D")
     assert custo == 4.0
     assert caminho == ["A", "B", "C", "D"]
-
 
 def test_dijkstra_prefers_indirect_shorter():
     custo, caminho = dijkstra_caminho(_graph(), "A", "C")
     assert custo == 3.0
     assert caminho == ["A", "B", "C"]
 
-
 def test_dijkstra_same_source_dest():
     custo, caminho = dijkstra_caminho(_graph(), "A", "A")
     assert custo == 0.0
     assert caminho == ["A"]
-
 
 def test_dijkstra_no_path():
     g = Graph()
@@ -40,14 +35,12 @@ def test_dijkstra_no_path():
     assert custo == float("inf")
     assert caminho is None
 
-
 def test_dijkstra_all_distances():
     dist, _ = dijkstra(_graph(), "A")
     assert dist["A"] == 0.0
     assert dist["B"] == 1.0
     assert dist["C"] == 3.0
     assert dist["D"] == 4.0
-
 
 def test_dijkstra_rejects_negative_weight():
     g = Graph()
@@ -58,7 +51,6 @@ def test_dijkstra_rejects_negative_weight():
     )
     with pytest.raises(ValueError, match="pesos >= 0"):
         dijkstra(g, "A")
-
 
 def test_dijkstra_invalid_source():
     with pytest.raises(ValueError):

@@ -2,20 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import NbaGraphViewer from './NbaGraphViewer.jsx'
 
-/**
- * BellmanFordModal — abre um SUBGRAFO reduzido da MESMA rede da Parte 2
- * (mesmas bolas de basquete, cores e tiers), porém com PESOS NEGATIVOS simulados,
- * para demonstrar Bellman-Ford.
- *
- * Atende ao requisito: "Bellman-Ford com ao menos um caso com peso negativo
- * (e sem ciclo negativo) e um com ciclo negativo (detectado)."
- *
- * A rede real só tem pesos positivos (pontos). Aqui pegamos 5 jogadores reais da
- * amostra exibida e atribuímos um "saldo simulado" às jogadas — algumas negativas —
- * para exercitar Bellman-Ford de forma honesta. O subgrafo é renderizado pelo mesmo
- * componente da Parte 2 (NbaGraphViewer), apenas reduzido.
- */
-
 const GOLD = '#ffb74d'
 const PINK = '#f472b6'
 const GREEN = '#22dd88'
@@ -23,7 +9,6 @@ const GREEN = '#22dd88'
 const EDGE_FONT = { color: '#f4f4ff', size: 18, strokeWidth: 4, strokeColor: '#0a0e1a', align: 'top' }
 const ARROWS = { to: { enabled: true, scaleFactor: 0.6, type: 'arrow' } }
 
-// escolhe 5 jogadores reais distribuídos pela amostra (variedade de tiers/cores)
 function pickSubNodes(nodes) {
   const L = nodes.length
   const idx = [0, 0.22, 0.44, 0.66, 0.85].map((f) => Math.min(L - 1, Math.floor(f * L)))
@@ -38,17 +23,16 @@ function pickSubNodes(nodes) {
   return picked
 }
 
-// monta as arestas dirigidas simuladas entre os 5 nós (a,b,c,d,e)
 function buildEdges(ids, withCycle) {
   const [a, b, c, d, e] = ids
   const defs = [
     [a, b, 4],
     [a, c, 5],
-    [b, c, -2], // peso negativo (jogada de alto ganho)
+    [b, c, -2], 
     [b, d, 6],
     [c, d, 3],
     [d, e, 4],
-    [d, b, withCycle ? -8 : 1], // aresta de retorno: fecha ciclo negativo se -8
+    [d, b, withCycle ? -8 : 1], 
   ]
   return defs.map(([from, to, w], i) => {
     const neg = w < 0
@@ -68,7 +52,6 @@ function buildEdges(ids, withCycle) {
   })
 }
 
-/** Bellman-Ford (espelha src/graphs/digraph_algorithms.py). */
 function bellmanFord(nodes, edges, source) {
   const INF = Infinity
   const dist = Object.fromEntries(nodes.map((n) => [n, INF]))
@@ -134,7 +117,7 @@ export default function BellmanFordModal({ open, onClose, graphData }) {
     return () => window.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  // 5 jogadores reais da amostra
+  
   const subIds = useMemo(() => {
     if (!graphData?.nodes?.length) return []
     return pickSubNodes(graphData.nodes).map((n) => n.id)
@@ -142,7 +125,7 @@ export default function BellmanFordModal({ open, onClose, graphData }) {
 
   const subEdges = useMemo(() => buildEdges(subIds, withCycle), [subIds, withCycle])
 
-  // dataset reduzido no MESMO formato da Parte 2 (nós reais + arestas simuladas)
+  
   const reducedData = useMemo(() => {
     if (subIds.length < 5) return null
     const byId = Object.fromEntries(graphData.nodes.map((n) => [n.id, n]))
@@ -168,7 +151,7 @@ export default function BellmanFordModal({ open, onClose, graphData }) {
     return pathTo(result.prev, source, target)
   }, [result, source, target])
 
-  // reinicia a física ao trocar de cenário (novo grafo precisa estabilizar)
+  
   useEffect(() => {
     if (!open) return
     setPhysicsOn(true)
@@ -178,7 +161,7 @@ export default function BellmanFordModal({ open, onClose, graphData }) {
   const run = () => {
     if (!result) return
     if (result.hasNegativeCycle) {
-      // anima as arestas do ciclo negativo
+      
       const cyc = [...result.negNodes]
       const edges = subEdges
         .filter((e) => cyc.includes(e.from) && cyc.includes(e.to))
@@ -213,7 +196,7 @@ export default function BellmanFordModal({ open, onClose, graphData }) {
           maxHeight: '94vh',
         }}
       >
-        {/* Cabeçalho */}
+        {}
         <div className="flex items-start justify-between gap-3 p-5 pb-3">
           <div className="flex items-center gap-3">
             <span className="text-xl w-10 h-10 flex items-center justify-center rounded-xl shrink-0" style={{ background: `${PINK}20` }}>⇄</span>
@@ -238,7 +221,7 @@ export default function BellmanFordModal({ open, onClose, graphData }) {
             </div>
           ) : (
             <>
-              {/* Controles */}
+              {}
               <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   onClick={() => setWithCycle(false)}
@@ -263,7 +246,7 @@ export default function BellmanFordModal({ open, onClose, graphData }) {
                 </button>
               </div>
 
-              {/* O MESMO grafo da Parte 2, reduzido */}
+              {}
               <div
                 className="rounded-xl overflow-hidden relative"
                 style={{
@@ -290,7 +273,7 @@ export default function BellmanFordModal({ open, onClose, graphData }) {
                 </div>
               </div>
 
-              {/* Resultado */}
+              {}
               {result && (result.hasNegativeCycle ? (
                 <div className="rounded-xl p-4" style={{ background: `${PINK}12`, border: `1px solid ${PINK}55` }}>
                   <p className="font-bold text-sm mb-1" style={{ color: PINK }}>⚠ Ciclo negativo detectado</p>

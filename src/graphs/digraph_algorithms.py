@@ -1,10 +1,3 @@
-"""
-Algoritmos para grafo dirigido (Parte 2).
-
-BFS, DFS, Dijkstra e Bellman-Ford — implementações próprias sem libs de grafos.
-Usa apenas heapq (stdlib) no Dijkstra.
-"""
-
 from __future__ import annotations
 
 import heapq
@@ -13,25 +6,14 @@ from typing import Callable
 
 from src.graphs.digraph import DiGraph, DiEdge
 
-
-# ---------------------------------------------------------------------------
-# BFS Dirigido
-# ---------------------------------------------------------------------------
+                                                                             
+              
+                                                                             
 
 def bfs_directed(
     digraph: DiGraph,
     source: str,
 ) -> tuple[list[str], list[list[str]], dict[str, str | None]]:
-    """
-    BFS em grafo dirigido percorrendo apenas arestas de saída.
-
-    Retorna
-    -------
-    (order, layers, parent)
-        order  : lista de nós na ordem de descoberta
-        layers : layers[k] = lista de nós a distância exata k de source
-        parent : predecessor de cada nó (None para a source)
-    """
     if source not in digraph.nodes:
         raise ValueError(f"Nó fonte não encontrado: {source}")
 
@@ -55,10 +37,9 @@ def bfs_directed(
 
     return order, layers, parent
 
-
-# ---------------------------------------------------------------------------
-# DFS Dirigido
-# ---------------------------------------------------------------------------
+                                                                             
+              
+                                                                             
 
 def dfs_directed(
     digraph: DiGraph,
@@ -71,22 +52,6 @@ def dfs_directed(
     dict[tuple[str, str], str],
     bool,
 ]:
-    """
-    DFS iterativo em grafo dirigido percorrendo apenas arestas de saída.
-
-    Classifica cada aresta como 'tree', 'back', 'forward' ou 'cross'.
-    Uma aresta 'back' indica a presença de ciclo.
-
-    Retorna
-    -------
-    (order, disc, fin, parent, edge_types, has_cycle)
-        order      : nós na ordem de descoberta
-        disc       : tempo de descoberta de cada nó
-        fin        : tempo de finalização de cada nó
-        parent     : predecessor na árvore DFS (None para a raiz)
-        edge_types : dict (u, v) -> 'tree'|'back'|'forward'|'cross'
-        has_cycle  : True se pelo menos uma aresta back foi encontrada
-    """
     if source not in digraph.nodes:
         raise ValueError(f"Nó fonte não encontrado: {source}")
 
@@ -106,7 +71,7 @@ def dfs_directed(
     timer[0] += 1
     order.append(source)
 
-    # Pilha: (nó, iterador sobre out_neighbors)
+                                               
     stack: list[tuple[str, object]] = [
         (source, iter(digraph.out_neighbors(source)))
     ]
@@ -114,7 +79,7 @@ def dfs_directed(
     while stack:
         u, nbrs = stack[-1]
         try:
-            v, _edge = next(nbrs)  # type: ignore[arg-type]
+            v, _edge = next(nbrs)                          
             if color[v] == WHITE:
                 color[v] = GRAY
                 disc[v] = timer[0]
@@ -126,7 +91,7 @@ def dfs_directed(
             elif color[v] == GRAY:
                 edge_types[(u, v)] = "back"
                 has_cycle = True
-            else:  # BLACK
+            else:         
                 if disc.get(u, -1) < disc.get(v, -1):
                     edge_types[(u, v)] = "forward"
                 else:
@@ -139,30 +104,15 @@ def dfs_directed(
 
     return order, disc, fin, parent, edge_types, has_cycle
 
-
-# ---------------------------------------------------------------------------
-# Dijkstra Dirigido
-# ---------------------------------------------------------------------------
+                                                                             
+                   
+                                                                             
 
 def dijkstra_directed(
     digraph: DiGraph,
     source: str,
     target: str | None = None,
 ) -> tuple[dict[str, float], dict[str, str | None]]:
-    """
-    Dijkstra em grafo dirigido usando edge.cost (sempre positivo) como peso.
-
-    Parâmetros
-    ----------
-    target : str | None
-        Early-stop quando o custo mínimo até target for determinado.
-
-    Retorna
-    -------
-    (dist, prev)
-        dist : distâncias mínimas de source a todos os nós alcançáveis
-        prev : predecessor de cada nó no caminho mínimo
-    """
     if source not in digraph.nodes:
         raise ValueError(f"Nó fonte não encontrado: {source}")
 
@@ -193,13 +143,11 @@ def dijkstra_directed(
 
     return dist, prev
 
-
 def reconstruir_caminho_di(
     prev: dict[str, str | None],
     source: str,
     target: str,
 ) -> list[str] | None:
-    """Reconstrói caminho mínimo a partir do dicionário prev."""
     if prev.get(target) is None and target != source:
         return None
     path: list[str] = []
@@ -210,35 +158,15 @@ def reconstruir_caminho_di(
     path.reverse()
     return path if path[0] == source else None
 
-
-# ---------------------------------------------------------------------------
-# Bellman-Ford
-# ---------------------------------------------------------------------------
+                                                                             
+              
+                                                                             
 
 def bellman_ford(
     digraph: DiGraph,
     source: str,
     weight_fn: Callable[[DiEdge], float] | None = None,
 ) -> tuple[dict[str, float], dict[str, str | None], bool, set[str]]:
-    """
-    Bellman-Ford em grafo dirigido.
-
-    Suporta pesos negativos; detecta ciclos negativos.
-
-    Parâmetros
-    ----------
-    weight_fn : callable | None
-        Função (DiEdge) -> float que define o peso da aresta.
-        Se None, usa edge.cost.
-
-    Retorna
-    -------
-    (dist, prev, has_negative_cycle, neg_cycle_nodes)
-        dist               : distâncias mínimas (podem ser -inf se afetadas por ciclo neg.)
-        prev               : predecessores
-        has_negative_cycle : True se foi detectado ciclo negativo
-        neg_cycle_nodes    : conjunto de nós afetados pelo ciclo negativo
-    """
     if source not in digraph.nodes:
         raise ValueError(f"Nó fonte não encontrado: {source}")
 
@@ -253,7 +181,7 @@ def bellman_ford(
     prev: dict[str, str | None] = {nd: None for nd in nodes}
     dist[source] = 0.0
 
-    # n-1 relaxamentos
+                      
     for _ in range(n - 1):
         updated = False
         for edge in edges:
@@ -268,7 +196,7 @@ def bellman_ford(
         if not updated:
             break
 
-    # n-ésima iteração: detectar ciclo negativo
+                                               
     neg_cycle_nodes: set[str] = set()
     has_negative_cycle = False
 

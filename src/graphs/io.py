@@ -1,10 +1,3 @@
-"""
-Parte 1 — modelagem do grafo de aeroportos: gerar e validar ``adjacencias_aeroportos.csv``.
-
-Lê ``data/aeroportos_data.csv`` e grava ``data/adjacencias_aeroportos.csv``
-(modelo Regional + Hub + Hub-Hub).
-"""
-
 from __future__ import annotations
 
 import csv
@@ -15,40 +8,18 @@ from typing import Any
 
 HUBS = frozenset({"GRU", "GIG", "BSB"})
 
-
 def calc_peso(
     iata_a: str,
     iata_b: str,
     regiao_a: str,
     regiao_b: str,
 ) -> float:
-    """
-    Parte 5 — Modelo híbrido de pesos (sem pesos negativos).
-
-    Fórmula:
-        peso = 1.0 + penalidade_regiao + penalidade_hub
-
-    Penalidades:
-      penalidade_regiao : +1.0 se as regiões forem diferentes
-                          (voo exige mais escala / distância maior)
-      penalidade_hub    : +0.5 se NENHUM dos dois aeroportos for hub nacional
-                          (sem hub → menos frequência / mais custo operacional)
-
-    Tabela resultante:
-      regional intra-região + ao menos 1 hub   → 1.0 + 0.0 + 0.0 = 1.0
-      regional intra-região sem hub            → 1.0 + 0.0 + 0.5 = 1.5
-      inter-regional com ao menos 1 hub        → 1.0 + 1.0 + 0.0 = 2.0
-      inter-regional sem hub (improvável)      → 1.0 + 1.0 + 0.5 = 2.5
-    """
     pen_regiao = 1.0 if regiao_a != regiao_b else 0.0
     pen_hub = 0.0 if (iata_a in HUBS or iata_b in HUBS) else 0.5
     return 1.0 + pen_regiao + pen_hub
 
-
 def project_root() -> Path:
-    """Raiz do repositório (pasta que contém ``data/``)."""
     return Path(__file__).resolve().parent.parent.parent
-
 
 def data_dir(repo_root: Path | None = None) -> Path:
     base = project_root() if repo_root is None else repo_root
@@ -64,7 +35,6 @@ def load_airport_rows(
     with open(csv_path, newline="", encoding="utf-8") as csv_file:
         return list(csv.DictReader(csv_file))
 
-
 def load_adjacencia_rows(
     path: Path | None = None,
     *,
@@ -74,9 +44,7 @@ def load_adjacencia_rows(
     with open(csv_path, newline="", encoding="utf-8") as csv_file:
         return list(csv.DictReader(csv_file))
 
-
 def build_adjacencias_edges(airport_rows: list[dict[str, str]]) -> dict[tuple[str, str], dict[str, Any]]:
-    """Monta o dicionário de arestas (par ordenado) a partir da lista de aeroportos."""
     iata_to_regiao = {row["iata"]: row["regiao"] for row in airport_rows}
     edges: dict[tuple[str, str], dict[str, Any]] = {}
 
@@ -150,13 +118,11 @@ def build_adjacencias_edges(airport_rows: list[dict[str, str]]) -> dict[tuple[st
 
     return edges
 
-
 def write_adjacencias_aeroportos_csv(
     out_path: Path | None = None,
     *,
     root: Path | None = None,
 ) -> int:
-    """Gera ``adjacencias_aeroportos.csv``; retorna número de arestas."""
     repo_root = project_root() if root is None else root
     airport_rows = load_airport_rows(root=repo_root)
     edges = build_adjacencias_edges(airport_rows)
@@ -170,7 +136,6 @@ def write_adjacencias_aeroportos_csv(
             edge_row = edges[edge_key]
             writer.writerow({column: edge_row[column] for column in fieldnames})
     return len(edges)
-
 
 def _is_connected(adjacency: dict[str, set[str]], nodes: list[str]) -> bool:
     if not nodes:
@@ -186,14 +151,7 @@ def _is_connected(adjacency: dict[str, set[str]], nodes: list[str]) -> bool:
                 queue.append(neighbor)
     return len(seen) == len(nodes)
 
-
 def validate_modelagem(*, root: Path | None = None) -> dict[str, Any]:
-    """
-    Valida ``aeroportos_data.csv`` + ``adjacencias_aeroportos.csv``.
-
-    Retorna um dicionário com estatísticas; levanta ``AssertionError`` ou
-    ``ValueError`` se algum requisito da Parte 1 falhar.
-    """
     repo_root = project_root() if root is None else root
     airport_rows = load_airport_rows(root=repo_root)
     nodes = [row["iata"] for row in airport_rows]
@@ -261,7 +219,6 @@ def validate_modelagem(*, root: Path | None = None) -> dict[str, Any]:
         "regioes": regions,
     }
 
-
 def _cli_main(argv: list[str] | None = None) -> int:
     import argparse
 
@@ -304,7 +261,6 @@ def _cli_main(argv: list[str] | None = None) -> int:
 
     parser.print_help()
     return 2
-
 
 if __name__ == "__main__":
     import sys

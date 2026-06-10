@@ -7,45 +7,33 @@ import {
 import { getNbaStats, getNbaReport } from '../api.js'
 import InsightModal from '../components/InsightModal.jsx'
 
-// Gestalt — Continuidade: Top Passadores → gradiente sequencial âmbar (um único matiz, escuro→claro)
-// reflete hierarquia de ranking; o olho lê a progressão como ordenação natural.
 const PASSADORES_GRADIENT = [
   '#7c3e00', '#8f4800', '#a35200', '#b75d00', '#c96800',
   '#db7400', '#eb8210', '#f59028', '#f9a34a', '#fbb96e',
   '#fccf96', '#fddbb8', '#fee8d3', '#fff1e8', '#fff8f2',
 ]
 
-// Gestalt — Continuidade: Top Recebedores → gradiente sequencial ciano (matiz diferente do de cima)
-// Similaridade: usar a mesma lógica de gradiente reforça que ambos são rankings;
-// matizes distintos separam as duas categorias (Saída vs. Entrada).
 const RECEBEDORES_GRADIENT = [
   '#003f5c', '#00526e', '#006580', '#007891', '#008ba1',
   '#009db0', '#00afbf', '#16bfcc', '#3acfd8', '#5ddee2',
   '#82ecec', '#a8f5f5', '#c8fafc', '#dffcfe', '#f0feff',
 ]
 
-// Gestalt — Continuidade: Distribuição de pesos → faixas são ordenadas (ordinal),
-// então gradiente sequencial de azul-violeta expressa "mais pesado = mais saturado".
 const WEIGHT_GRADIENT = [
   '#1e1b4b', '#2d2a6e', '#3b378f', '#4845ae', '#5552c8',
   '#6562df', '#7875f0', '#908ef7', '#abaafb', '#c8c7fd',
 ]
 
-// Gestalt — Proximidade + Continuidade: camadas BFS são profundidades ordenadas;
-// gradiente de violeta-magenta comunica crescimento progressivo da expansão.
 const BFS_LAYER_GRADIENT = [
   '#4a044e', '#6b1a6e', '#8b2c8e', '#a73fac', '#c055c8',
   '#d46edb', '#e48de8', '#efadf2', '#f7ccf9', '#fdecfe',
 ]
 
-// Gestalt — Similaridade: algoritmos são categorias nominais distintas → cores categoricamente
-// equidistantes no espaço perceptual (azul, verde, âmbar, rosa) — fáceis de distinguir.
-// Nenhuma cor repete matiz com as paletas sequenciais acima.
 const ALGO_COLORS = {
-  BFS: '#38bdf8',        // azul céu — BFS = expansão em largura (azul = abertura)
-  DFS: '#4ade80',        // verde — DFS = exploração profunda (verde = árvore)
-  Dijkstra: '#fbbf24',   // âmbar — Dijkstra = menor custo (âmbar = atenção/otimização)
-  'Bellman-Ford': '#f472b6', // rosa — Bellman-Ford = detecta ciclos negativos (rosa = alerta suave)
+  BFS: '#38bdf8',        
+  DFS: '#4ade80',        
+  Dijkstra: '#fbbf24',   
+  'Bellman-Ford': '#f472b6', 
 }
 
 function ChartTooltip({ active, payload, label }) {
@@ -86,7 +74,7 @@ export default function NbaDashboard() {
     getNbaReport().then(setReport).catch(() => setReportErr(true))
   }, [])
 
-  // distribuição de graus combinada (out + in) por valor de grau
+  
   const degreeDist = useMemo(() => {
     if (!stats) return []
     return [
@@ -98,7 +86,7 @@ export default function NbaDashboard() {
   const outDist = useMemo(() => stats?.out_degree_dist ?? [], [stats])
   const inDist = useMemo(() => stats?.in_degree_dist ?? [], [stats])
 
-  // camadas BFS empilhadas por fonte
+  
   const bfsLayers = useMemo(() => {
     if (!report?.bfs) return { data: [], max: 0 }
     const max = Math.max(...report.bfs.map((b) => b.layer_sizes.length))
@@ -110,7 +98,7 @@ export default function NbaDashboard() {
     return { data, max }
   }, [report])
 
-  // comparação de desempenho (tempo ms)
+  
   const perfData = useMemo(() => {
     if (!report) return []
     const last = (s) => s.split(' ').pop()
@@ -139,7 +127,7 @@ export default function NbaDashboard() {
 
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-8">
 
-        {/* cartões de estatística */}
+        {}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard label="Jogadores (nós)" value={(gs?.num_nodes ?? stats?.num_nodes ?? '…').toLocaleString?.('pt-BR') ?? '…'} accent="#4fc3f7" />
           <StatCard label="Assistências (arestas)" value={(gs?.num_edges ?? stats?.num_edges ?? '…').toLocaleString?.('pt-BR') ?? '…'} accent="#ffd54f" />
@@ -156,7 +144,7 @@ export default function NbaDashboard() {
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-          {/* Top passadores */}
+          {}
           <section className="card">
             <div className="flex items-center justify-between mb-1">
               <p className="section-title mb-0">Top 15 Passadores (grau de saída)</p>
@@ -182,7 +170,7 @@ Jogadores do topo desta lista são, estrategicamente, os nós mais críticos da 
                   <YAxis type="category" dataKey="nome" tick={{ fill: '#cbd5e1', fontSize: 10 }} width={110} interval={0} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="grau" name="Grau saída" radius={[0, 4, 4, 0]}>
-                    {/* Gestalt Continuidade: rank 1 (topo) = cor mais clara/quente; rank 15 = mais escura */}
+                    {}
                     {[...stats.top_passadores].reverse().map((d, i) => (
                       <Cell key={d.nome} fill={PASSADORES_GRADIENT[i % PASSADORES_GRADIENT.length]} />
                     ))}
@@ -192,7 +180,7 @@ Jogadores do topo desta lista são, estrategicamente, os nós mais críticos da 
             ) : <EmptyChart msg="Carregando…" />}
           </section>
 
-          {/* Top recebedores */}
+          {}
           <section className="card">
             <div className="flex items-center justify-between mb-1">
               <p className="section-title mb-0">Top 15 Recebedores (grau de entrada)</p>
@@ -218,7 +206,7 @@ Compare os dois rankings: se um jogador aparece em ambos, ele possui um perfil b
                   <YAxis type="category" dataKey="nome" tick={{ fill: '#cbd5e1', fontSize: 10 }} width={110} interval={0} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="grau" name="Grau entrada" radius={[0, 4, 4, 0]}>
-                    {/* Gestalt Continuidade: mesmo raciocínio; matiz ciano ≠ âmbar → Similaridade */}
+                    {}
                     {[...stats.top_recebedores].reverse().map((d, i) => (
                       <Cell key={d.nome} fill={RECEBEDORES_GRADIENT[i % RECEBEDORES_GRADIENT.length]} />
                     ))}
@@ -228,7 +216,7 @@ Compare os dois rankings: se um jogador aparece em ambos, ele possui um perfil b
             ) : <EmptyChart msg="Carregando…" />}
           </section>
 
-          {/* Distribuição de graus (log-log scatter) */}
+          {}
           <section className="card xl:col-span-2">
             <div className="flex items-center justify-between mb-1">
               <p className="section-title mb-0">Distribuição de Graus (escala log-log)</p>
@@ -264,7 +252,7 @@ A separação entre curvas de saída (âmbar) e entrada (ciano) revela uma assim
                   <ZAxis range={[24, 24]} />
                   <Tooltip content={<ChartTooltip />} cursor={{ strokeDasharray: '3 3', stroke: '#475569' }} />
                   <Legend wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
-                  {/* Gestalt Similaridade: saída = âmbar (mesma família dos Passadores); entrada = ciano (mesma família dos Recebedores) */}
+                  {}
                   <Scatter name="Grau de saída" data={outDist} fill="#fbbf24" />
                   <Scatter name="Grau de entrada" data={inDist} fill="#38bdf8" />
                 </ScatterChart>
@@ -272,7 +260,7 @@ A separação entre curvas de saída (âmbar) e entrada (ciano) revela uma assim
             ) : <EmptyChart msg="Carregando…" />}
           </section>
 
-          {/* Distribuição de pesos */}
+          {}
           <section className="card">
             <div className="flex items-center justify-between mb-1">
               <p className="section-title mb-0">Distribuição de Pesos das Assistências</p>
@@ -301,7 +289,7 @@ Para o algoritmo de Dijkstra, o peso de cada aresta é usado invertido (1/peso):
                   <YAxis scale="log" domain={[1, 'auto']} allowDataOverflow tick={{ fill: '#94a3b8', fontSize: 11 }} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="freq" name="Arestas" radius={[3, 3, 0, 0]}>
-                    {/* Gestalt Continuidade: faixas de peso são ordenadas → gradiente sequencial */}
+                    {}
                     {stats.weight_hist.map((d, i) => (
                       <Cell key={d.faixa} fill={WEIGHT_GRADIENT[i % WEIGHT_GRADIENT.length]} />
                     ))}
@@ -311,7 +299,7 @@ Para o algoritmo de Dijkstra, o peso de cada aresta é usado invertido (1/peso):
             ) : <EmptyChart msg="Carregando…" />}
           </section>
 
-          {/* Camadas BFS */}
+          {}
           <section className="card">
             <div className="flex items-center justify-between mb-1">
               <p className="section-title mb-0">Camadas BFS por Fonte</p>
@@ -338,7 +326,7 @@ A diferença no tamanho das barras entre camadas revela como a rede "explode" ra
                   <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
                   <Tooltip content={<ChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 10, color: '#94a3b8' }} />
-                  {/* Gestalt Continuidade + Proximidade: camadas BFS são sequenciais → gradiente de profundidade */}
+                  {}
                   {Array.from({ length: bfsLayers.max }, (_, i) => (
                     <Bar key={i} dataKey={`L${i}`} stackId="bfs" name={`Camada ${i}`}
                       fill={BFS_LAYER_GRADIENT[i % BFS_LAYER_GRADIENT.length]} />
@@ -348,7 +336,7 @@ A diferença no tamanho das barras entre camadas revela como a rede "explode" ra
             ) : <EmptyChart msg={reportErr ? 'Relatório indisponível' : 'Carregando…'} />}
           </section>
 
-          {/* Comparação de desempenho */}
+          {}
           <section className="card xl:col-span-2">
             <div className="flex items-center justify-between mb-1">
               <p className="section-title mb-0">Comparação de Desempenho dos Algoritmos</p>
@@ -391,7 +379,7 @@ Bellman-Ford com ciclo negativo é o mais custoso: ele relaxa todas as (n-1)×|E
 
         </div>
 
-        {/* Caminhos Dijkstra */}
+        {}
         {report?.dijkstra?.length > 0 && (
           <section className="card">
             <p className="section-title">Caminhos Mínimos (Dijkstra)</p>
@@ -425,7 +413,7 @@ Bellman-Ford com ciclo negativo é o mais custoso: ele relaxa todas as (n-1)×|E
           </section>
         )}
 
-        {/* Bellman-Ford */}
+        {}
         {report?.bellman_ford?.length > 0 && (
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {report.bellman_ford.map((bf, i) => (

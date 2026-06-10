@@ -1,10 +1,3 @@
-"""
-api.py — FastAPI backend para o frontend React.
-
-Expõe endpoints para upload de CSV, execução do pipeline e consulta de dados.
-Execute com:  uvicorn src.api:app --reload --host 127.0.0.1 --port 8000
-"""
-
 from __future__ import annotations
 
 import csv
@@ -36,10 +29,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# ---------------------------------------------------------------------------
-# Status
-# ---------------------------------------------------------------------------
+                                                                             
+        
+                                                                             
 
 @app.get("/api/status")
 def api_status() -> dict[str, Any]:
@@ -54,10 +46,9 @@ def api_status() -> dict[str, Any]:
         "grafo_html": (OUT_DIR / "grafo_interativo.html").exists(),
     }
 
-
-# ---------------------------------------------------------------------------
-# Upload CSV
-# ---------------------------------------------------------------------------
+                                                                             
+            
+                                                                             
 
 @app.post("/api/upload/{tipo}")
 async def upload_csv(tipo: str, file: UploadFile = File(...)) -> dict[str, str]:
@@ -77,10 +68,9 @@ async def upload_csv(tipo: str, file: UploadFile = File(...)) -> dict[str, str]:
         shutil.copyfileobj(file.file, f)
     return {"message": f"'{mapping[tipo]}' salvo com sucesso.", "path": str(dest)}
 
-
-# ---------------------------------------------------------------------------
-# Pipeline
-# ---------------------------------------------------------------------------
+                                                                             
+          
+                                                                             
 
 @app.post("/api/run/gerar")
 def run_gerar() -> dict[str, Any]:
@@ -91,7 +81,6 @@ def run_gerar() -> dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-
 @app.post("/api/run/metricas")
 def run_metricas() -> dict[str, Any]:
     from src.solve import solve_parte3
@@ -101,7 +90,6 @@ def run_metricas() -> dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-
 @app.post("/api/run/distancias")
 def run_distancias() -> dict[str, Any]:
     from src.solve import solve_parte6
@@ -110,7 +98,6 @@ def run_distancias() -> dict[str, Any]:
         return {"success": True, "data": resultado}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
-
 
 @app.post("/api/run/viz")
 def run_viz() -> dict[str, Any]:
@@ -123,10 +110,9 @@ def run_viz() -> dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-
-# ---------------------------------------------------------------------------
-# Graph data
-# ---------------------------------------------------------------------------
+                                                                             
+            
+                                                                             
 
 @app.get("/api/data/graph")
 def get_graph_data() -> dict[str, Any]:
@@ -163,7 +149,6 @@ def get_graph_data() -> dict[str, Any]:
     ]
     return {"nodes": nodes, "edges": edges}
 
-
 @app.get("/api/data/metrics")
 def get_metrics() -> dict[str, Any]:
     path = OUT_DIR / "global.json"
@@ -171,14 +156,12 @@ def get_metrics() -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="Execute 'Calcular Métricas' primeiro.")
     return json.loads(path.read_text(encoding="utf-8"))
 
-
 @app.get("/api/data/regions")
 def get_regions() -> list[dict[str, Any]]:
     path = OUT_DIR / "regioes.json"
     if not path.exists():
         raise HTTPException(status_code=404, detail="Execute 'Calcular Métricas' primeiro.")
     return json.loads(path.read_text(encoding="utf-8"))
-
 
 @app.get("/api/data/grades")
 def get_grades() -> list[dict[str, Any]]:
@@ -190,7 +173,6 @@ def get_grades() -> list[dict[str, Any]]:
         for row in csv.DictReader(f):
             rows.append({"aeroporto": row["aeroporto"], "grau": int(row["grau"])})
     return rows
-
 
 @app.get("/api/data/ego")
 def get_ego() -> list[dict[str, Any]]:
@@ -209,7 +191,6 @@ def get_ego() -> list[dict[str, Any]]:
             })
     return rows
 
-
 @app.get("/api/data/routes")
 def get_routes() -> list[dict[str, Any]]:
     path = OUT_DIR / "distancias_rotas.csv"
@@ -221,10 +202,9 @@ def get_routes() -> list[dict[str, Any]]:
             rows.append(dict(row))
     return rows
 
-
-# ---------------------------------------------------------------------------
-# Algorithm runner
-# ---------------------------------------------------------------------------
+                                                                             
+                  
+                                                                             
 
 @app.post("/api/algorithm")
 def run_algorithm(body: dict[str, Any]) -> dict[str, Any]:
@@ -277,10 +257,9 @@ def run_algorithm(body: dict[str, Any]) -> dict[str, Any]:
             detail=f"Algoritmo inválido: '{alg}'. Use: BFS / DFS / DIJKSTRA",
         )
 
-
-# ---------------------------------------------------------------------------
-# Aviation stats (ANAC / IBGE supplementary data)
-# ---------------------------------------------------------------------------
+                                                                             
+                                                 
+                                                                             
 
 @app.get("/api/data/aviation-stats")
 def get_aviation_stats() -> dict[str, Any]:
@@ -289,9 +268,8 @@ def get_aviation_stats() -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="aviation_stats.json não encontrado.")
     return json.loads(path.read_text(encoding="utf-8"))
 
-
-# Mandatory paths (Recife→Porto Alegre  and  Manaus→São Paulo)
-# ---------------------------------------------------------------------------
+                                                              
+                                                                             
 
 @app.get("/api/data/caminhos-obrigatorios")
 def get_caminhos_obrigatorios() -> dict[str, Any]:
@@ -328,16 +306,14 @@ def get_caminhos_obrigatorios() -> dict[str, Any]:
         },
     }
 
-
-# ---------------------------------------------------------------------------
-# Parte 2 — Rede de Assistências NBA (grafo dirigido)
-# ---------------------------------------------------------------------------
+                                                                             
+                                                     
+                                                                             
 
 NBA_CSV = DATA_DIR / "dataset_parte2" / "nba_graph_final.csv"
 
-# cache simples do grafo NBA (83k arestas) entre requisições
+                                                            
 _nba_graph_cache: dict[str, Any] = {}
-
 
 def _load_nba_graph():
     from src.graphs.digraph import digraph_from_csv
@@ -350,13 +326,10 @@ def _load_nba_graph():
     if _nba_graph_cache.get("mtime") != mtime:
         _nba_graph_cache["graph"] = digraph_from_csv(NBA_CSV)
         _nba_graph_cache["mtime"] = mtime
-        _nba_graph_cache.pop("sub", None)  # invalida subgrafo
+        _nba_graph_cache.pop("sub", None)                     
     return _nba_graph_cache["graph"]
 
-
 def _load_nba_sample_subgraph():
-    """Subgrafo induzido pela amostra exibida (≈163 nós) — usado nos algoritmos
-    da tela do grafo, para que a animação ocorra dentro da rede visível."""
     from src.parte2 import build_nba_sample
     g = _load_nba_graph()
     if "sub" not in _nba_graph_cache:
@@ -365,10 +338,8 @@ def _load_nba_sample_subgraph():
         _nba_graph_cache["sub"] = g.induced_subgraph(ids)
     return _nba_graph_cache["sub"]
 
-
 @app.get("/api/parte2/graph")
 def get_nba_graph() -> dict[str, Any]:
-    """Subgrafo interativo da rede NBA (mesma amostra do HTML original)."""
     from src.parte2 import build_nba_sample
     try:
         g = _load_nba_graph()
@@ -378,10 +349,8 @@ def get_nba_graph() -> dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-
 @app.get("/api/parte2/report")
 def get_nba_report() -> dict[str, Any]:
-    """Relatório com estatísticas e resultados dos algoritmos (parte2_report.json)."""
     path = OUT_DIR / "parte2_report.json"
     if not path.exists():
         raise HTTPException(
@@ -390,10 +359,8 @@ def get_nba_report() -> dict[str, Any]:
         )
     return json.loads(path.read_text(encoding="utf-8"))
 
-
 @app.get("/api/parte2/stats")
 def get_nba_stats() -> dict[str, Any]:
-    """Estatísticas agregadas do grafo NBA completo para o dashboard."""
     try:
         g = _load_nba_graph()
     except HTTPException:
@@ -426,7 +393,7 @@ def get_nba_stats() -> dict[str, Any]:
     def _pct(p: float) -> int:
         return weights[min(n_w - 1, int(n_w * p))] if n_w else 0
 
-    # histograma de pesos em faixas (escala mais legível que log)
+                                                                 
     faixas = [(2, 5), (6, 10), (11, 25), (26, 50), (51, 100),
               (101, 250), (251, 500), (501, 4000)]
     weight_hist = []
@@ -446,11 +413,8 @@ def get_nba_stats() -> dict[str, Any]:
         "weight_pct": {"p50": _pct(0.50), "p90": _pct(0.90), "p99": _pct(0.99)},
     }
 
-
 @app.post("/api/parte2/algorithm")
 def run_nba_algorithm(body: dict[str, Any]) -> dict[str, Any]:
-    """Executa BFS / DFS / Dijkstra / Bellman-Ford sobre a subrede NBA exibida
-    (subgrafo induzido pela amostra), para que o percurso seja animável na tela."""
     from src.graphs import digraph_algorithms as da
 
     alg = body.get("algorithm", "").upper()
@@ -521,7 +485,7 @@ def run_nba_algorithm(body: dict[str, Any]) -> dict[str, Any]:
             raise HTTPException(status_code=400, detail="Bellman-Ford requer campo 'target'.")
         if destino not in g.nodes:
             raise HTTPException(status_code=400, detail=f"Jogador de destino não encontrado na subrede: '{destino}'")
-        # usa edge.cost (positivo); a parada antecipada converge em O(diâmetro) passos
+                                                                                      
         dist, prev, neg_cycle, _ = da.bellman_ford(g, origem)
         custo = dist.get(destino, float("inf"))
         caminho = da.reconstruir_caminho_di(prev, origem, destino) if custo < float("inf") else None
@@ -539,18 +503,16 @@ def run_nba_algorithm(body: dict[str, Any]) -> dict[str, Any]:
         detail=f"Algoritmo inválido: '{alg}'. Use: BFS / DFS / DIJKSTRA / BELLMAN-FORD",
     )
 
-
-# ---------------------------------------------------------------------------
-# Serve generated output files
-# ---------------------------------------------------------------------------
+                                                                             
+                              
+                                                                             
 
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/out", StaticFiles(directory=str(OUT_DIR)), name="out")
 
-
-# ---------------------------------------------------------------------------
-# Serve React SPA (production build)
-# ---------------------------------------------------------------------------
+                                                                             
+                                    
+                                                                             
 
 _frontend_dist = ROOT / "frontend" / "dist"
 
@@ -566,10 +528,9 @@ if _frontend_dist.exists():
     def serve_spa(full_path: str = "") -> FileResponse:
         return FileResponse(str(_frontend_dist / "index.html"))
 
-
-# ---------------------------------------------------------------------------
-# Dev entry point
-# ---------------------------------------------------------------------------
+                                                                             
+                 
+                                                                             
 
 if __name__ == "__main__":
     import uvicorn

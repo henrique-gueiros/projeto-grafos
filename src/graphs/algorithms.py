@@ -1,11 +1,3 @@
-"""
-Implementação própria dos algoritmos de grafos.
-
-BFS, DFS, Dijkstra e Bellman-Ford — sem uso de bibliotecas externas
-que já implementem esses algoritmos (conforme regra do projeto).
-Usa apenas ``heapq`` (fila de prioridade da stdlib) para Dijkstra.
-"""
-
 from __future__ import annotations
 
 import heapq
@@ -14,23 +6,11 @@ from typing import Any
 
 from src.graphs.graph import Graph
 
-
-# ---------------------------------------------------------------------------
-# BFS — Busca em Largura
-# ---------------------------------------------------------------------------
+                                                                             
+                        
+                                                                             
 
 def bfs(grafo: Graph, origem: str) -> dict[str, Any]:
-    """
-    BFS a partir de ``origem``.
-
-    Retorna
-    -------
-    dict com:
-      - ordem_visita : list[str]
-      - distancias   : dict[str, int]  (número de arestas até a origem)
-      - predecessores: dict[str, str|None]
-      - camadas      : list[list[str]]  (camadas BFS por nível)
-    """
     if origem not in grafo.nodes:
         raise ValueError(f"Nó de origem não existe: '{origem}'")
 
@@ -60,24 +40,11 @@ def bfs(grafo: Graph, origem: str) -> dict[str, Any]:
         "camadas": camadas,
     }
 
-
-# ---------------------------------------------------------------------------
-# DFS — Busca em Profundidade (iterativo)
-# ---------------------------------------------------------------------------
+                                                                             
+                                         
+                                                                             
 
 def dfs(grafo: Graph, origem: str) -> dict[str, Any]:
-    """
-    DFS iterativo a partir de ``origem`` (evita estouro de pilha em grafos grandes).
-
-    Retorna
-    -------
-    dict com:
-      - ordem_visita  : list[str]
-      - predecessores : dict[str, str|None]
-      - arestas_arvore: list[tuple[str,str]]  (tree edges)
-      - arestas_retorno: list[tuple[str,str]] (back edges — indicam ciclos)
-      - tem_ciclo     : bool
-    """
     if origem not in grafo.nodes:
         raise ValueError(f"Nó de origem não existe: '{origem}'")
 
@@ -87,7 +54,7 @@ def dfs(grafo: Graph, origem: str) -> dict[str, Any]:
     arestas_arvore: list[tuple[str, str]] = []
     arestas_retorno: list[tuple[str, str]] = []
 
-    # Pilha: (nó, índice_do_próximo_vizinho_a_processar)
+                                                        
     vizinhos_cache: dict[str, list[tuple[str, Any]]] = {}
     stack: list[tuple[str, int]] = [(origem, 0)]
     em_pilha: set[str] = {origem}
@@ -125,43 +92,16 @@ def dfs(grafo: Graph, origem: str) -> dict[str, Any]:
         "tem_ciclo": len(arestas_retorno) > 0,
     }
 
-
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-# Dijkstra — menor caminho com pesos não-negativos
-# ---------------------------------------------------------------------------
+                                                                             
+                                                                             
+                                                  
+                                                                             
 
 def dijkstra(
     grafo: Graph,
     origem: str,
     destino: str | None = None,
 ) -> tuple[dict[str, float], dict[str, str | None]]:
-    """
-    Algoritmo de Dijkstra (implementação própria com min-heap).
-
-    Parâmetros
-    ----------
-    grafo : Graph
-        Grafo não-direcionado ponderado (pesos ≥ 0).
-    origem : str
-        IATA do nó de partida.
-    destino : str | None
-        Se fornecido, encerra assim que o custo mínimo até ``destino``
-        for determinado (otimização early-stop).
-
-    Retorna
-    -------
-    (dist, prev)
-        dist : dict[str, float]
-            Distância mínima de ``origem`` até cada nó alcançável.
-        prev : dict[str, str | None]
-            Predecessor de cada nó no caminho mínimo (None para a origem).
-
-    Levanta
-    -------
-    ValueError
-        Se ``origem`` não existir no grafo.
-    """
     if origem not in grafo.nodes:
         raise ValueError(f"Nó de origem não existe: {origem}")
 
@@ -186,7 +126,7 @@ def dijkstra(
             continue
         visitado.add(u)
 
-        # Early-stop se só precisamos do destino
+                                                
         if destino is not None and u == destino:
             break
 
@@ -201,20 +141,13 @@ def dijkstra(
 
     return dist, prev
 
-
 def reconstruir_caminho(
     prev: dict[str, str | None],
     origem: str,
     destino: str,
 ) -> list[str] | None:
-    """
-    Reconstrói o caminho mínimo a partir do dicionário de predecessores.
-
-    Retorna a lista de IATAs do caminho (ex.: ["REC", "GRU", "POA"])
-    ou ``None`` se não houver caminho.
-    """
     if prev.get(destino) is None and destino != origem:
-        return None  # sem caminho
+        return None               
 
     caminho: list[str] = []
     atual: str | None = destino
@@ -224,17 +157,11 @@ def reconstruir_caminho(
     caminho.reverse()
     return caminho
 
-
 def dijkstra_caminho(
     grafo: Graph,
     origem: str,
     destino: str,
 ) -> tuple[float, list[str] | None]:
-    """
-    Atalho: retorna (custo, caminho) entre origem e destino usando Dijkstra.
-
-    Retorna (inf, None) se não houver caminho.
-    """
     dist, prev = dijkstra(grafo, origem, destino)
     custo = dist.get(destino, float("inf"))
     if custo == float("inf"):

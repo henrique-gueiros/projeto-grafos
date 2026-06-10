@@ -1,20 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-/**
- * InsightModal — botão pequeno que abre um modal com o insight do gráfico.
- *
- * Props:
- *   title   {string}  — título do insight (ex: "Top Passadores")
- *   insight {string}  — texto do insight (pode conter \n para parágrafos)
- *   icon    {string}  — emoji opcional (padrão: "💡")
- *   accent  {string}  — cor de destaque do modal (padrão: "#fbbf24")
- */
 export default function InsightModal({ title, insight, icon = '💡', accent = '#fbbf24' }) {
   const [open, setOpen] = useState(false)
   const overlayRef = useRef(null)
 
-  // Fecha com Escape
+  
   useEffect(() => {
     if (!open) return
     const handler = (e) => { if (e.key === 'Escape') setOpen(false) }
@@ -22,14 +13,14 @@ export default function InsightModal({ title, insight, icon = '💡', accent = '
     return () => window.removeEventListener('keydown', handler)
   }, [open])
 
-  // Fecha clicando fora do card
+  
   const handleOverlayClick = (e) => {
     if (e.target === overlayRef.current) setOpen(false)
   }
 
   return (
     <>
-      {/* Botão compacto */}
+      {}
       <button
         onClick={() => setOpen(true)}
         title="Ver insight deste gráfico"
@@ -43,7 +34,7 @@ export default function InsightModal({ title, insight, icon = '💡', accent = '
         {icon} Insight
       </button>
 
-      {/* Portal do modal */}
+      {}
       {open && createPortal(
         <div
           ref={overlayRef}
@@ -59,7 +50,7 @@ export default function InsightModal({ title, insight, icon = '💡', accent = '
               boxShadow: `0 0 40px ${accent}20`,
             }}
           >
-            {/* Cabeçalho */}
+            {}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span
@@ -84,10 +75,10 @@ export default function InsightModal({ title, insight, icon = '💡', accent = '
               </button>
             </div>
 
-            {/* Separador */}
+            {}
             <div className="h-px w-full" style={{ background: `${accent}30` }} />
 
-            {/* Corpo do insight */}
+            {}
             <div className="space-y-3">
               {insight.split('\n').map((line, i) =>
                 line.trim() ? (
@@ -98,7 +89,7 @@ export default function InsightModal({ title, insight, icon = '💡', accent = '
               )}
             </div>
 
-            {/* Rodapé */}
+            {}
             <p className="text-[10px] text-slate-600 text-right">Pressione Esc ou clique fora para fechar</p>
           </div>
         </div>,

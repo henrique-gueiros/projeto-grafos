@@ -46,9 +46,11 @@ const GraphViewer = forwardRef(function GraphViewer(
     pathHighlights = { path1: false, path2: false },
     regionEdgeHL = {},
     mandatoryPaths = null,
-    animation = null, // { startNode, edges: [[from,to],...], accent }
+    animation = null,
     physicsOn = true,
     onStabilized,
+    onNodeClick,
+    onNodeDeselect,
   },
   ref,
 ) {
@@ -61,7 +63,7 @@ const GraphViewer = forwardRef(function GraphViewer(
   const tooltipPosRef = useRef({ x: 0, y: 0 })
   const tooltipElRef = useRef(null)
 
-  // animação de percurso de algoritmo
+  
   const [animStep, setAnimStep] = useState(0)
   const selectedNodeRef = useRef(null)
   const animTimerRef = useRef(null)
@@ -87,6 +89,10 @@ const GraphViewer = forwardRef(function GraphViewer(
       networkRef.current?.fit({
         animation: { duration: 400, easingFunction: 'easeInOutQuad' },
       })
+    },
+    deselect() {
+      networkRef.current?.unselectAll()
+      selectedNodeRef.current = null
     },
   }))
 
@@ -126,17 +132,20 @@ const GraphViewer = forwardRef(function GraphViewer(
     )
 
     const vEdges = new DataSet(
-      data.edges.map((e) => ({
-        id: e.id,
-        from: e.from,
-        to: e.to,
-        tipo: e.tipo,
-        color: { color: '#2a3a4a', opacity: 1 },
-        width: 1,
-        dashes: false,
-        shadow: { enabled: false },
-        smooth: { type: 'continuous', roundness: 0.2 },
-      })),
+      data.edges.map((e) => {
+        const c = CONN_COLORS[e.tipo] ?? '#64748b'
+        return {
+          id: e.id,
+          from: e.from,
+          to: e.to,
+          tipo: e.tipo,
+          color: { color: c, opacity: 0.55 },
+          width: EDGE_WIDTHS[e.tipo] ?? 1,
+          dashes: e.tipo === 'regional' ? [7, 4] : false,
+          shadow: { enabled: false },
+          smooth: { type: 'continuous', roundness: 0.2 },
+        }
+      }),
     )
 
     nodesDS.current = vNodes
@@ -171,6 +180,7 @@ const GraphViewer = forwardRef(function GraphViewer(
       if (!nodes.length || !edgesDS.current) return
       const nodeId = nodes[0]
       selectedNodeRef.current = nodeId
+      onNodeClick?.(nodeId)
       edgesDS.current.update(
         data.edges.map((e) => {
           const connected = e.from === nodeId || e.to === nodeId
@@ -189,15 +199,19 @@ const GraphViewer = forwardRef(function GraphViewer(
 
     network.on('deselectNode', () => {
       selectedNodeRef.current = null
+      onNodeDeselect?.()
       if (!edgesDS.current) return
       edgesDS.current.update(
-        data.edges.map((e) => ({
-          id: e.id,
-          color: { color: '#2a3a4a', opacity: 1 },
-          width: 1,
-          shadow: { enabled: false },
-          dashes: false,
-        }))
+        data.edges.map((e) => {
+          const c = CONN_COLORS[e.tipo] ?? '#64748b'
+          return {
+            id: e.id,
+            color: { color: c, opacity: 0.55 },
+            width: EDGE_WIDTHS[e.tipo] ?? 1,
+            shadow: { enabled: false },
+            dashes: e.tipo === 'regional' ? [7, 4] : false,
+          }
+        })
       )
     })
 
@@ -222,7 +236,7 @@ const GraphViewer = forwardRef(function GraphViewer(
       edgesDS.current = null
       setTooltip(null)
     }
-  }, [data]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data]) 
 
   useEffect(() => {
     networkRef.current?.setOptions({ physics: { enabled: physicsOn } })
@@ -231,7 +245,7 @@ const GraphViewer = forwardRef(function GraphViewer(
   useEffect(() => {
     if (!nodesDS.current || !edgesDS.current || !data) return
 
-    // ---- Modo animação: dim total + revelação progressiva do percurso ----
+    
     if (animation) {
       const accent = animation.accent ?? '#f59e0b'
       const edges = animation.edges ?? []
@@ -342,10 +356,10 @@ const GraphViewer = forwardRef(function GraphViewer(
       const key = edgeKey(e.from, e.to)
 
       if (hiddenNodes.has(e.from) || hiddenNodes.has(e.to)) {
-        return { id: e.id, hidden: true, color: { color: '#475569', opacity: 1 }, width: 1 }
+        return { id: e.id, hidden: true }
       }
       if (!anyPath && tipos.length > 0 && !tipos.includes(e.tipo)) {
-        return { id: e.id, hidden: true, color: { color: '#475569', opacity: 1 }, width: 1 }
+        return { id: e.id, hidden: true }
       }
 
       const inP1 = p1Active && path1Set.has(key)
@@ -366,26 +380,29 @@ const GraphViewer = forwardRef(function GraphViewer(
             return { id: e.id, hidden: false, color: { color: REGION_HEX[regiao] ?? '#64748b', opacity: 1 }, width: 3, shadow: { enabled: true, color: REGION_HEX[regiao] ?? '#64748b', size: 10, x: 0, y: 0 }, dashes: false }
           }
         }
-        return { id: e.id, hidden: false, color: { color: '#475569', opacity: 0.06 }, width: 1, shadow: { enabled: false }, dashes: false }
+        const c = CONN_COLORS[e.tipo] ?? '#64748b'
+        return { id: e.id, hidden: false, color: { color: c, opacity: 0.07 }, width: 1, shadow: { enabled: false }, dashes: false }
       }
 
       if (anyPath) {
-        return { id: e.id, hidden: false, color: { color: '#475569', opacity: 0.06 }, width: 1, shadow: { enabled: false }, dashes: false }
+        const c = CONN_COLORS[e.tipo] ?? '#64748b'
+        return { id: e.id, hidden: false, color: { color: c, opacity: 0.07 }, width: 1, shadow: { enabled: false }, dashes: false }
       }
 
+      const c = CONN_COLORS[e.tipo] ?? '#64748b'
       return {
         id: e.id,
         hidden: false,
-        color: { color: '#2a3a4a', opacity: 1 },
-        width: 1,
+        color: { color: c, opacity: 0.55 },
+        width: EDGE_WIDTHS[e.tipo] ?? 1,
         shadow: { enabled: false },
-        dashes: false,
+        dashes: e.tipo === 'regional' ? [7, 4] : false,
       }
     })
 
     edgesDS.current.update(edgeUpdates)
 
-    // Re-apply selection glow if a node is selected
+    
     const nodeId = selectedNodeRef.current
     if (nodeId && !anyPath && !anyRegionHL && !animation) {
       edgesDS.current.update(
@@ -404,7 +421,7 @@ const GraphViewer = forwardRef(function GraphViewer(
           })
       )
     }
-  }, [filters, pathHighlights, regionEdgeHL, mandatoryPaths, animation, animStep, data]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filters, pathHighlights, regionEdgeHL, mandatoryPaths, animation, animStep, data]) 
 
   if (!data) {
     return (
@@ -443,8 +460,7 @@ const GraphViewer = forwardRef(function GraphViewer(
         }}
       />
 
-
-      {/* Status bar */}
+      {}
       {data && (
         <div
           style={{

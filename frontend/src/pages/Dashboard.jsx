@@ -11,15 +11,12 @@ import InsightModal from '../components/InsightModal.jsx'
 
 const REGIONS = ['Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste']
 
-// Gestalt similarity: same tier = same color; warm → cool = more connected → less connected
-// Thresholds derived from natural breaks in the data (grau 19 / 8 / 5-6)
 const HUB_TIERS = [
   { label: 'Hub Nacional',       color: '#ef4444', minGrau: 15 },
   { label: 'Hub Regional',       color: '#f97316', minGrau: 7  },
   { label: 'Aeroporto Regional', color: '#14b8a6', minGrau: 0  },
 ]
 
-// Escada crescente de aeroportos: frio → quente dentro do espectro azul-roxo
 const BLUE_PURPLE_RAMP = ['#7dd3fc', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc']
 
 function getHubTier(grau) {

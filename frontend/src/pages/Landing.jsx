@@ -15,7 +15,7 @@ function PartCard({ emoji, badge, title, subtitle, bullets, accent, glow, onOpen
       className="group relative flex flex-col rounded-2xl border border-slate-700/80 bg-slate-800/40 p-7 cursor-pointer overflow-hidden
         transition-all duration-200 hover:border-slate-600 hover:bg-slate-800/70 hover:-translate-y-1 hover:shadow-2xl"
     >
-      {/* brilho decorativo */}
+      {}
       <div
         className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl opacity-20 transition-opacity duration-200 group-hover:opacity-40"
         style={{ background: glow }}
@@ -75,7 +75,7 @@ export default function Landing() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-slate-900 px-6 py-14 overflow-hidden">
-      {/* fundo com gradiente sutil */}
+      {}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(96,165,250,0.08),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(251,191,36,0.07),transparent_55%)]" />
 
       <div className="relative w-full max-w-5xl">

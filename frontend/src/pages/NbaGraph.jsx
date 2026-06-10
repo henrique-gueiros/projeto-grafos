@@ -5,7 +5,6 @@ import NbaGraphViewer from '../components/NbaGraphViewer.jsx'
 import HighlightsModal from '../components/HighlightsModal.jsx'
 import BellmanFordModal from '../components/BellmanFordModal.jsx'
 
-// quadra de basquete desenhada em SVG (fundo temático do grafo)
 const COURT = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 500" preserveAspectRatio="xMidYMid slice">` +
   `<g fill="none" stroke="#ffd9a0" stroke-width="3" stroke-linejoin="round">` +
@@ -123,7 +122,7 @@ export default function NbaGraph() {
     getNbaGraph()
       .then(setData)
       .catch((e) => showToast(e.message ?? 'Erro ao carregar grafo NBA', 'error'))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) 
 
   const players = useMemo(() => data?.nodes?.map((n) => n.id) ?? [], [data])
 
@@ -232,7 +231,7 @@ export default function NbaGraph() {
       <div className="flex flex-1 overflow-hidden">
 
         <main className="flex-1 relative overflow-hidden">
-          {/* fundo temático NBA — arena escura + linhas de quadra */}
+          {}
           <div
             className="absolute inset-0 z-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse 80% 80% at 50% 45%, #1c2138 0%, #11131f 55%, #08080f 100%)' }}
@@ -246,7 +245,7 @@ export default function NbaGraph() {
               opacity: 0.13,
             }}
           />
-          {/* leve brilho âmbar (luzes da arena) */}
+          {}
           <div
             className="absolute inset-0 z-0 pointer-events-none"
             style={{ background: 'radial-gradient(circle at 50% 50%, rgba(232,116,27,0.10), transparent 60%)' }}
@@ -293,10 +292,10 @@ export default function NbaGraph() {
             </div>
           )}
 
-          {/* stats + legenda */}
+          {}
           {data && (
             <div style={{ position: 'absolute', bottom: 12, left: 12, zIndex: 10, display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 240 }}>
-              {/* contagem */}
+              {}
               <div style={{
                 background: 'rgba(3,6,16,0.88)',
                 border: '1px solid rgba(0,150,255,0.12)',
@@ -308,7 +307,7 @@ export default function NbaGraph() {
                 <span>⬡ {data.num_nodes} jogadores</span>
                 <span>→ {data.num_edges} assistências</span>
               </div>
-              {/* legenda de tiers */}
+              {}
               <div style={{
                 background: 'rgba(3,6,16,0.88)',
                 border: '1px solid rgba(0,150,255,0.12)',
@@ -335,7 +334,7 @@ export default function NbaGraph() {
             </div>
           )}
 
-          {/* painel de info do nó selecionado */}
+          {}
           {selectedNode && (
             <div style={{
               position: 'absolute', top: 12, left: 12, zIndex: 10,
@@ -390,7 +389,7 @@ export default function NbaGraph() {
           className="w-80 shrink-0 flex flex-col overflow-hidden"
           style={{ background: '#060d1c', borderLeft: '1px solid rgba(0,150,255,0.15)' }}
         >
-          {/* Tab bar */}
+          {}
           <div className="cockpit-tab-bar">
             <button
               className={`cockpit-tab ${activeTab === 'analysis' ? 'active' : ''}`}
@@ -410,11 +409,11 @@ export default function NbaGraph() {
             {players.map((p) => <option key={p} value={p} />)}
           </datalist>
 
-          {/* Scrollable content */}
+          {}
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'analysis' ? (
               <div>
-                {/* ── ALGORITHMS ─────────────────────────── */}
+                {}
                 <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
                   <span className="cockpit-label">Algorithms</span>
                   <div className="space-y-1.5 mb-3">
@@ -490,7 +489,7 @@ export default function NbaGraph() {
               </div>
             ) : (
               <div>
-                {/* ── BUSCAR JOGADOR ──────────────────────── */}
+                {}
                 <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
                   <span className="cockpit-label">Buscar Jogador</span>
                   <div className="relative">
@@ -506,7 +505,7 @@ export default function NbaGraph() {
                   </div>
                 </div>
 
-                {/* ── TIER ───────────────────────────────── */}
+                {}
                 <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
                   <span className="cockpit-label">Tier</span>
                   <div className="space-y-1.5">
@@ -538,7 +537,7 @@ export default function NbaGraph() {
                   </div>
                 </div>
 
-                {/* ── EXIBIÇÃO ───────────────────────────── */}
+                {}
                 <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
                   <span className="cockpit-label">Exibição</span>
                   <button
@@ -560,7 +559,7 @@ export default function NbaGraph() {
                   </button>
                 </div>
 
-                {/* ── LIMPAR ─────────────────────────────── */}
+                {}
                 <div className="p-3">
                   <button
                     onClick={clearAll}
@@ -579,7 +578,7 @@ export default function NbaGraph() {
             )}
           </div>
 
-          {/* Status footer */}
+          {}
           <div style={{
             padding: '7px 12px', flexShrink: 0,
             background: 'rgba(2,5,12,0.9)',

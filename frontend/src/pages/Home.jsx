@@ -4,6 +4,7 @@ import {
   getGraphData, runAlgorithm, getCaminhosObrigatorios,
 } from '../api.js'
 import GraphViewer, { REGION_HEX, CONN_COLORS } from '../components/GraphViewer.jsx'
+import AirportSidebar from '../components/AirportSidebar.jsx'
 
 const REGIONS = ['Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste']
 const TIPOS = ['regional', 'hub', 'hub-hub']
@@ -11,7 +12,6 @@ const TIPO_LABELS = { regional: 'Regional', hub: 'Hub', 'hub-hub': 'Hub-Hub' }
 
 const ALGO_ACCENT = { BFS: '#3b82f6', DFS: '#6366f1', DIJKSTRA: '#f59e0b' }
 
-// converte o resultado do algoritmo numa sequência de arestas para animação
 function buildAnimation(result) {
   const accent = ALGO_ACCENT[result.algorithm] ?? '#f59e0b'
   if (result.algorithm === 'BFS') {
@@ -55,8 +55,6 @@ function Spinner() {
   )
 }
 
-
-
 function PathBtn({ label, path, active, onClick }) {
   return (
     <button
@@ -92,7 +90,6 @@ function PathBtn({ label, path, active, onClick }) {
     </button>
   )
 }
-
 
 const ALGO_FONT = { fontFamily: "'ui-sans-serif', monospace", fontWeight: 900 }
 
@@ -154,6 +151,19 @@ export default function Home() {
   const [toast, setToast] = useState(null)
   const [activeTab, setActiveTab] = useState('flight')
 
+  const [selectedIata, setSelectedIata] = useState(null)
+  const selectedNode = useMemo(
+    () => graphData?.nodes?.find((n) => n.id === selectedIata) ?? null,
+    [graphData, selectedIata],
+  )
+
+  const handleNodeClick    = useCallback((iata) => setSelectedIata(iata), [])
+  const handleNodeDeselect = useCallback(() => setSelectedIata(null), [])
+  const closeSidebar       = useCallback(() => {
+    setSelectedIata(null)
+    graphRef.current?.deselect()
+  }, [])
+
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 5000)
@@ -166,17 +176,17 @@ export default function Home() {
   }, [])
 
   const loadGraph = useCallback(async () => {
-    try { setGraphData(await getGraphData()) } catch { /* not ready */ }
+    try { setGraphData(await getGraphData()) } catch {  }
   }, [])
 
   const loadPaths = useCallback(async () => {
-    try { setMandatoryPaths(await getCaminhosObrigatorios()) } catch { /* not computed */ }
+    try { setMandatoryPaths(await getCaminhosObrigatorios()) } catch {  }
   }, [])
 
   useEffect(() => {
     loadGraph()
     loadPaths()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) 
 
   const toggleFilter = (key, val) =>
     setFilters((f) => {
@@ -243,7 +253,7 @@ export default function Home() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{
-            fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 14, fontWeight: 900,
+            fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 14,
             color: '#7edcff', letterSpacing: '3px',
           }}>
             REDE DE AEROPORTOS — BR
@@ -284,6 +294,12 @@ export default function Home() {
 
       <div className="flex flex-1 overflow-hidden">
 
+        <AirportSidebar
+          iata={selectedIata}
+          node={selectedNode}
+          onClose={closeSidebar}
+        />
+
         <main className="flex-1 relative overflow-hidden">
           <GraphViewer
             ref={graphRef}
@@ -295,6 +311,8 @@ export default function Home() {
             animation={animation}
             physicsOn={physicsOn}
             onStabilized={() => setPhysicsOn(false)}
+            onNodeClick={handleNodeClick}
+            onNodeDeselect={handleNodeDeselect}
           />
 
           <div className="absolute top-3 right-3 flex gap-1.5 z-10">
@@ -329,7 +347,7 @@ export default function Home() {
           className="w-80 shrink-0 flex flex-col overflow-hidden"
           style={{ background: '#060d1c', borderLeft: '1px solid rgba(0,150,255,0.15)' }}
         >
-          {/* Tab bar */}
+          {}
           <div className="cockpit-tab-bar">
             <button
               className={`cockpit-tab ${activeTab === 'flight' ? 'active' : ''}`}
@@ -345,11 +363,11 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Scrollable content */}
+          {}
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'flight' ? (
               <div>
-                {/* ── ALGORITHMS ────────────────────────── */}
+                {}
                 <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
                   <span className="cockpit-label">Algorithms</span>
 
@@ -423,7 +441,7 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* ── CAMINHOS OBRIGATÓRIOS ─────────────── */}
+                {}
                 <div className="p-3">
                   <span className="cockpit-label">Caminhos Obrigatórios</span>
                   <div className="space-y-1.5">
@@ -449,7 +467,7 @@ export default function Home() {
               </div>
             ) : (
               <div>
-                {/* ── REGIÃO ──────────────────────────── */}
+                {}
                 <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
                   <span className="cockpit-label">Região</span>
                   <div className="space-y-1.5">
@@ -495,7 +513,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* ── TIPO DE LIGAÇÃO ─────────────────── */}
+                {}
                 <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
                   <span className="cockpit-label">Tipo de Ligação</span>
                   <div className="flex gap-1.5">
@@ -522,7 +540,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* ── CONEXÕES INTERNAS ───────────────── */}
+                {}
                 {graphData && (
                   <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
                     <span className="cockpit-label">Conexões Internas</span>
@@ -551,7 +569,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* ── LIMPAR ──────────────────────────── */}
+                {}
                 {(hasFilter || hasHighlight || algoResult) && (
                   <div className="p-3 space-y-1.5">
                     {hasHighlight && (
@@ -581,7 +599,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* Status footer */}
+          {}
           <div style={{
             padding: '7px 12px', flexShrink: 0,
             background: 'rgba(2,5,12,0.9)',

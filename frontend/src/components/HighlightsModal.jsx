@@ -2,16 +2,16 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 
 const HIGHLIGHTS = {
-  'T. Young':       'qVxfS0Y2yzE', // Trae Young Mixtape
-  'S. Curry':       'eY2D-FjoA7w', // World's Greatest Stephen Curry Reel
-  'J. Johnson':     'A5AS8JNyInc', // Joe Johnson Career Highlights
-  'J. Holiday':     'lfDpPjncK8U', // Jrue Holiday 23-24 Season
-  'J. Green':       'aurDi-kgmK0', // Jeff Green Highlight Reel
-  'J. Smith':       '0PbMWkXJI0A', // Josh Smith Career Highlights
-  'M. Williams':    'K_9gGorAfqI', // Mo Williams 52 pts Career High
-  'G. Hill':        'u3mDx_6_UOk', // George Hill Highlight Mix
-  'D. Wright':      'vrx-qcZT92c', // Delon Wright 22-23 Season
-  'J. Richardson':  'a3jqf9RsmLA', // Josh Richardson Top Plays
+  'T. Young':       'qVxfS0Y2yzE', 
+  'S. Curry':       'eY2D-FjoA7w', 
+  'J. Johnson':     'A5AS8JNyInc', 
+  'J. Holiday':     'lfDpPjncK8U', 
+  'J. Green':       'aurDi-kgmK0', 
+  'J. Smith':       '0PbMWkXJI0A', 
+  'M. Williams':    'K_9gGorAfqI', 
+  'G. Hill':        'u3mDx_6_UOk', 
+  'D. Wright':      'vrx-qcZT92c', 
+  'J. Richardson':  'a3jqf9RsmLA', 
 }
 
 export default function HighlightsModal({ playerName, onClose }) {
@@ -47,7 +47,7 @@ export default function HighlightsModal({ playerName, onClose }) {
           display: 'flex', flexDirection: 'column', gap: 10,
         }}
       >
-        {/* header */}
+        {}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span style={{
@@ -77,7 +77,7 @@ export default function HighlightsModal({ playerName, onClose }) {
           </button>
         </div>
 
-        {/* player */}
+        {}
         {src ? (
           <iframe
             src={src}

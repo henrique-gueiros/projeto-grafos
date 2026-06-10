@@ -1,7 +1,3 @@
-"""
-Grafo não direcionado ponderado: nós (aeroportos / IATA) e arestas com metadados.
-"""
-
 from __future__ import annotations
 
 from collections import deque
@@ -11,24 +7,15 @@ from typing import Iterator
 
 from . import io
 
-
 @dataclass(frozen=True)
 class Node:
-    """Vértice do grafo: um aeroporto; o rótulo é o código IATA."""
 
     iata: str
     cidade: str
     regiao: str
 
-    @property
-    def rotulo(self) -> str:
-        """Rótulo do nó no sentido do enunciado (IATA)."""
-        return self.iata
-
-
 @dataclass
 class Edge:
-    """Aresta não direcionada entre dois IATA; ``origem`` e ``destino`` em ordem lexicográfica."""
 
     origem: str
     destino: str
@@ -54,12 +41,7 @@ class Edge:
             justificativa=justificativa,
         )
 
-
 class Graph:
-    """
-    Grafo rotulado: chave do nó = IATA.
-    Lista de adjacência com objeto ``Edge`` compartilhado entre os dois extremos.
-    """
 
     def __init__(self) -> None:
         self._nodes: dict[str, Node] = {}
@@ -69,9 +51,6 @@ class Graph:
     @property
     def nodes(self) -> dict[str, Node]:
         return self._nodes
-
-    def get_node(self, iata: str) -> Node | None:
-        return self._nodes.get(iata)
 
     def add_node(self, node: Node) -> None:
         if node.iata in self._nodes:
@@ -88,7 +67,6 @@ class Graph:
         self._edges[edge_key] = edge
         self._adjacency[edge.origem].append((edge.destino, edge))
         self._adjacency[edge.destino].append((edge.origem, edge))
-
 
     def neighbors(self, iata: str) -> Iterator[tuple[str, Edge]]:
         for neighbor_iata, edge in self._adjacency.get(iata, ()):
@@ -117,12 +95,7 @@ class Graph:
                     queue.append(neighbor_iata)
         return len(seen) == len(self._nodes)
 
-
 def graph_from_model_files(*, root: Path | None = None) -> Graph:
-    """
-    Monta o ``Graph`` a partir de ``aeroportos_data.csv`` e do **modelo** em memória
-    (mesma regra que gera ``adjacencias_aeroportos.csv``).
-    """
     airport_rows = io.load_airport_rows(root=root)
     graph = Graph()
     for row in airport_rows:
@@ -145,12 +118,7 @@ def graph_from_model_files(*, root: Path | None = None) -> Graph:
         )
     return graph
 
-
 def graph_from_csv_files(*, root: Path | None = None) -> Graph:
-    """
-    Monta o ``Graph`` a partir dos CSVs em disco (nós + ``adjacencias_aeroportos.csv``).
-    Útil quando o arquivo de adjacências foi editado manualmente.
-    """
     airport_rows = io.load_airport_rows(root=root)
     graph = Graph()
     for row in airport_rows:

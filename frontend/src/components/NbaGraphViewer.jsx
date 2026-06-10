@@ -56,7 +56,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
     data,
     activeTiers = [],
     showAllLabels = false,
-    animation = null, // { startNode, edges: [[from,to],...], accent }
+    animation = null, 
     physicsOn = true,
     onStabilized,
     onSelect,
@@ -73,7 +73,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
   const tooltipPosRef = useRef({ x: 0, y: 0 })
   const tooltipElRef = useRef(null)
 
-  // animação de percurso de algoritmo
+  
   const [animStep, setAnimStep] = useState(0)
   const animTimerRef = useRef(null)
 
@@ -93,7 +93,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
     return () => { if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = null } }
   }, [animation])
 
-  // adjacência (não-dirigida) + metadados originais por id
+  
   const meta = useMemo(() => {
     if (!data) return null
     const adj = {}
@@ -130,7 +130,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
     },
   }))
 
-  // ---- instanciar a rede ----
+  
   useEffect(() => {
     if (!containerRef.current || !data) return
 
@@ -240,25 +240,25 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
       edgesDS.current = null
       setTooltip(null)
     }
-  }, [data]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data]) 
 
   useEffect(() => {
     networkRef.current?.setOptions({ physics: { enabled: physicsOn } })
   }, [physicsOn])
 
-  // notificar o pai quando a seleção muda via busca / clique
+  
   useEffect(() => {
     if (!nodesDS.current) return
     if (selected) onSelect?.(nodesDS.current.get(selected) ?? null)
-  }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selected]) 
 
-  // ---- recomputar estilos (animação | filtro + labels + vizinhança) ----
+  
   useEffect(() => {
     if (!nodesDS.current || !edgesDS.current || !data || !meta) return
 
     const { adj, tierById, ringById, imgById, origSize } = meta
 
-    // ---- Modo animação: dim total + revelação progressiva do percurso ----
+    
     if (animation) {
       const accent = animation.accent ?? '#ffb74d'
       const edges = animation.edges ?? []
@@ -327,7 +327,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
       return { id: e.id, hidden: false, color, width: e.width }
     })
     edgesDS.current.update(edgeUpdates)
-  }, [data, meta, activeTiers, showAllLabels, selected, animation, animStep]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, meta, activeTiers, showAllLabels, selected, animation, animStep]) 
 
   if (!data) {
     return (

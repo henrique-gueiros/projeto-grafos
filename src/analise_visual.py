@@ -1,8 +1,3 @@
-"""
-Implementa os requisitos 7, 8 e 9 do projeto.
-Usa apenas matplotlib, numpy e pyvis — sem networkx.
-"""
-
 import json
 import math
 import matplotlib.lines as mlines
@@ -14,19 +9,16 @@ from src.graphs.graph import Graph
 from src.graphs.algorithms import dijkstra_caminho
 from src.metricas import calc_ego, calc_global, calc_regioes
 
-
 def _get_out_dir(root: Path | None = None) -> Path:
     if root:
         return root / "out"
     return Path(__file__).resolve().parent.parent / "out"
 
-
-# ---------------------------------------------------------------------------
-# Helpers de layout (sem networkx)
-# ---------------------------------------------------------------------------
+                                                                             
+                                  
+                                                                             
 
 def _circular_layout(nodes: list[str], radius: float = 1.0) -> dict[str, tuple[float, float]]:
-    """Posiciona nós uniformemente em um círculo."""
     n = len(nodes)
     if n == 0:
         return {}
@@ -40,9 +32,7 @@ def _circular_layout(nodes: list[str], radius: float = 1.0) -> dict[str, tuple[f
         for i, node in enumerate(nodes)
     }
 
-
 def _star_layout(hub: str, outer: list[str], radius: float = 1.0) -> dict[str, tuple[float, float]]:
-    """Hub no centro; demais nós distribuídos em volta."""
     pos: dict[str, tuple[float, float]] = {hub: (0.0, 0.0)}
     n = len(outer)
     for i, node in enumerate(outer):
@@ -50,10 +40,8 @@ def _star_layout(hub: str, outer: list[str], radius: float = 1.0) -> dict[str, t
         pos[node] = (radius * math.cos(angle), radius * math.sin(angle))
     return pos
 
-
 def _draw_node(ax, x: float, y: float, label: str, color: str,
                border: str = "white", radius: float = 0.07, fontsize: int = 10) -> None:
-    """Desenha um nó (círculo + rótulo) em um Axes."""
     circle = mpatches.Circle(
         (x, y), radius, facecolor=color, edgecolor=border, linewidth=2, zorder=3
     )
@@ -61,17 +49,14 @@ def _draw_node(ax, x: float, y: float, label: str, color: str,
     ax.text(x, y, label, ha="center", va="center",
             fontsize=fontsize, fontweight="bold", zorder=4, color="black")
 
-
 def _draw_edge(ax, x1: float, y1: float, x2: float, y2: float,
                color: str = "#888888", linewidth: float = 1.5) -> None:
-    """Desenha uma aresta entre dois pontos."""
     ax.plot([x1, x2], [y1, y2], color=color, linewidth=linewidth,
             zorder=1, solid_capstyle="round")
 
-
-# ---------------------------------------------------------------------------
-# Requisito 7 — Árvore de percurso
-# ---------------------------------------------------------------------------
+                                                                             
+                                  
+                                                                             
 
 def visualizar_arvore_percurso(grafo: Graph, root: Path | None = None):
     out_dir = _get_out_dir(root)
@@ -128,10 +113,9 @@ def visualizar_arvore_percurso(grafo: Graph, root: Path | None = None):
 
     return paths
 
-
-# ---------------------------------------------------------------------------
-# Requisito 8 — Visualizações analíticas
-# ---------------------------------------------------------------------------
+                                                                             
+                                        
+                                                                             
 
 def visualizar_distribuicao_graus(grafo: Graph, root: Path | None = None):
     out_dir = _get_out_dir(root)
@@ -150,7 +134,6 @@ def visualizar_distribuicao_graus(grafo: Graph, root: Path | None = None):
     plt.savefig(save_path, bbox_inches="tight")
     plt.close()
     return save_path
-
 
 def visualizar_ranking_conectividade(grafo: Graph, root: Path | None = None):
     out_dir = _get_out_dir(root)
@@ -177,7 +160,6 @@ def visualizar_ranking_conectividade(grafo: Graph, root: Path | None = None):
     plt.close()
     return save_path
 
-
 def visualizar_comparacao_regioes(grafo: Graph, root: Path | None = None):
     out_dir = _get_out_dir(root)
     regioes_data = calc_regioes(grafo)
@@ -196,7 +178,6 @@ def visualizar_comparacao_regioes(grafo: Graph, root: Path | None = None):
     plt.close()
     return save_path
 
-
 def visualizar_subgrafo_maior_grau(grafo: Graph, root: Path | None = None):
     out_dir = _get_out_dir(root)
     ego_data = calc_ego(grafo)
@@ -207,7 +188,7 @@ def visualizar_subgrafo_maior_grau(grafo: Graph, root: Path | None = None):
     vizinhos = [v for v, _ in grafo.neighbors(hub)]
     node_set = {hub} | set(vizinhos)
 
-    # Arestas dentro do subgrafo
+                                
     subedges: list[tuple[str, str]] = []
     for u in node_set:
         for v, _ in grafo.neighbors(u):
@@ -248,22 +229,16 @@ def visualizar_subgrafo_maior_grau(grafo: Graph, root: Path | None = None):
     plt.close()
     return save_path
 
-
-
-
-# ---------------------------------------------------------------------------
-# Requisito 9 — Grafo interativo (pyvis)
-# ---------------------------------------------------------------------------
+                                                                             
+                                        
+                                                                             
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
-
 
 def _ler_template(nome: str) -> str:
     return (_TEMPLATES_DIR / nome).read_text(encoding="utf-8")
 
-
 def _edges_por_regiao(grafo: Graph, region_colors: dict[str, str]) -> dict[str, list[list[str]]]:
-    """Arestas intra-regionais por região — para destaque no grafo."""
     reg_lookup = {iata: node.regiao for iata, node in grafo.nodes.items()}
     by_reg: dict[str, set[tuple[str, str]]] = {r: set() for r in region_colors}
     for edge in grafo.edges():
@@ -271,7 +246,6 @@ def _edges_por_regiao(grafo: Graph, region_colors: dict[str, str]) -> dict[str, 
         if ro == rd:
             by_reg[ro].add(tuple(sorted((edge.origem, edge.destino))))
     return {r: [list(p) for p in sorted(s)] for r, s in by_reg.items()}
-
 
 def _injetar_legenda(
     html_path: Path,
@@ -288,7 +262,6 @@ def _injetar_legenda(
     default_edge: str = "#4a4a5a",
     highlight_width: int = 4,
 ) -> None:
-    """Injeta legenda e estilos customizados no HTML gerado pelo pyvis."""
     c1_str = " → ".join(caminho1) if caminho1 else "N/D"
     c2_str = " → ".join(caminho2) if caminho2 else "N/D"
 
@@ -378,17 +351,7 @@ def _injetar_legenda(
     html = html.replace("</body>", legend_html + "\n</body>")
     html_path.write_text(html, encoding="utf-8")
 
-
 def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
-    """
-    Req 9 — HTML interativo com pyvis (sem networkx).
-
-    Recursos:
-    - Tooltip por nó: grau, região, densidade_ego.
-    - Caixa de busca/filtro (filter_menu do pyvis).
-    - Legenda com caminhos obrigatórios REC→POA e MAO→GRU clicáveis
-      (destaque nas arestas só ao clicar na legenda).
-    """
     try:
         from pyvis.network import Network
     except ImportError:
@@ -408,11 +371,11 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
 
     if caminho_rec_poa:
         for i in range(len(caminho_rec_poa) - 1):
-            path1_edges.add(tuple(sorted((caminho_rec_poa[i], caminho_rec_poa[i + 1]))))  # type: ignore[arg-type]
+            path1_edges.add(tuple(sorted((caminho_rec_poa[i], caminho_rec_poa[i + 1]))))                          
 
     if caminho_mao_gru:
         for i in range(len(caminho_mao_gru) - 1):
-            path2_edges.add(tuple(sorted((caminho_mao_gru[i], caminho_mao_gru[i + 1]))))  # type: ignore[arg-type]
+            path2_edges.add(tuple(sorted((caminho_mao_gru[i], caminho_mao_gru[i + 1]))))                          
 
     path1_nodes = set(caminho_rec_poa or [])
     path2_nodes = set(caminho_mao_gru or [])
@@ -538,10 +501,9 @@ def gerar_grafo_interativo(grafo: Graph, root: Path | None = None) -> Path:
 
     return html_path
 
-
-# ---------------------------------------------------------------------------
-# Requisito 10 — Análise exploratória e explanatória (AVD)
-# ---------------------------------------------------------------------------
+                                                                             
+                                                          
+                                                                             
 
 _REGION_COLORS = {
     "Norte":        "#4fc3f7",
@@ -552,12 +514,7 @@ _REGION_COLORS = {
 }
 _HUBS = {"BSB", "GRU", "GIG"}
 
-
 def _explr_dispersao_grau_densidade(grafo: Graph, out_dir: Path) -> Path:
-    """
-    Exploratória 1 — Scatter grau × densidade-ego.
-    Revela a estrutura bimodal da rede: hubs isolados vs. aeroportos regionais.
-    """
     ego_data = calc_ego(grafo)
     reg_lookup = {iata: node.regiao for iata, node in grafo.nodes.items()}
 
@@ -589,7 +546,7 @@ def _explr_dispersao_grau_densidade(grafo: Graph, out_dir: Path) -> Path:
     ax.grid(True, linestyle="--", alpha=0.35)
     ax.set_ylim(-0.05, 1.15)
 
-    # Anotação interpretativa
+                             
     ax.text(0.02, 0.08,
             "Aeroportos regionais: grau baixo, ego-rede totalmente densa\n"
             "Hubs nacionais: grau máximo, ego-rede com mesma densidade da rede global",
@@ -601,12 +558,7 @@ def _explr_dispersao_grau_densidade(grafo: Graph, out_dir: Path) -> Path:
     plt.close()
     return save_path
 
-
 def _explr_matriz_regioes(grafo: Graph, out_dir: Path) -> Path:
-    """
-    Exploratória 2 — Heatmap de conexões entre regiões.
-    Revela quais pares de regiões trocam mais conexões diretas.
-    """
     regioes = sorted({node.regiao for node in grafo.nodes.values()})
     idx = {r: i for i, r in enumerate(regioes)}
     n = len(regioes)
@@ -649,13 +601,7 @@ def _explr_matriz_regioes(grafo: Graph, out_dir: Path) -> Path:
     plt.close()
     return save_path
 
-
 def _expl_dominancia_hubs(grafo: Graph, out_dir: Path) -> Path:
-    """
-    Explanatória 1 — Dominância dos hubs nacionais.
-    Mensagem principal: BSB, GRU e GIG concentram a maior fatia do grau total.
-    Interpretável por quem não conhece o projeto.
-    """
     ego_data = sorted(calc_ego(grafo), key=lambda x: x["grau"])
 
     iatas = [d["aeroporto"] for d in ego_data]
@@ -698,14 +644,7 @@ def _expl_dominancia_hubs(grafo: Graph, out_dir: Path) -> Path:
     plt.close()
     return save_path
 
-
 def _expl_densidade_regioes(grafo: Graph, out_dir: Path) -> Path:
-    """
-    Explanatória 2 — Densidade intra-regional vs. densidade global.
-    Mensagem principal: cada região é um grupo totalmente conectado (clique),
-    mas a rede nacional como um todo é esparsa.
-    Interpretável por quem não conhece o projeto.
-    """
     regioes_data = calc_regioes(grafo)
     global_data = calc_global(grafo)
 
@@ -748,13 +687,7 @@ def _expl_densidade_regioes(grafo: Graph, out_dir: Path) -> Path:
     plt.close()
     return save_path
 
-
-
 def gerar_analise_avd(grafo: Graph, root: Path | None = None) -> list[Path]:
-    """
-    Req 10 — 2 visualizações exploratórias + 2 explanatórias + análise textual.
-    Retorna lista com os caminhos dos arquivos gerados.
-    """
     out_dir = _get_out_dir(root)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -765,10 +698,9 @@ def gerar_analise_avd(grafo: Graph, root: Path | None = None) -> list[Path]:
     paths.append(_expl_densidade_regioes(grafo, out_dir))
     return paths
 
-
-# ---------------------------------------------------------------------------
-# Ponto de entrada único
-# ---------------------------------------------------------------------------
+                                                                             
+                        
+                                                                             
 
 def run_all_visualizations(grafo: Graph, root: Path | None = None):
     print("Gerando visualizações (Req 7 e 8)...")

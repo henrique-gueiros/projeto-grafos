@@ -1,30 +1,8 @@
-"""
-cli.py — Interface de linha de comando do projeto.
-
-Uso geral:
-    python -m src.cli <subcomando> [--root PATH]
-
-Subcomandos disponíveis:
-    gerar       Gera data/adjacencias_aeroportos.csv a partir do modelo
-    validar     Valida aeroportos_data.csv + adjacencias_aeroportos.csv
-    metricas    Parte 3 e 4: calcula e grava métricas globais e rankings
-    distancias  Parte 6: calcula menor caminho (Dijkstra) para pares em rotas.csv
-
-Exemplos:
-    python -m src.cli gerar
-    python -m src.cli validar
-    python -m src.cli metricas
-    python -m src.cli distancias
-    python -m src.cli distancias --root /caminho/para/projeto
-    python -m src.cli viz
-"""
-
 from __future__ import annotations
 
 import argparse
 import sys
 from pathlib import Path
-
 
 def _cmd_gerar(root: Path | None) -> int:
     from src.graphs.io import write_adjacencias_aeroportos_csv, data_dir
@@ -35,7 +13,6 @@ def _cmd_gerar(root: Path | None) -> int:
     base = root if root is not None else project_root()
     print(f"Gerado: {data_dir(base) / 'adjacencias_aeroportos.csv'} ({num_arestas} arestas)")
     return 0
-
 
 def _cmd_validar(root: Path | None) -> int:
     from src.graphs.io import validate_modelagem
@@ -51,20 +28,17 @@ def _cmd_validar(root: Path | None) -> int:
     print("Validação OK.")
     return 0
 
-
 def _cmd_metricas(root: Path | None) -> int:
     from src.solve import solve_parte3
 
     solve_parte3(root=root, verbose=True)
     return 0
 
-
 def _cmd_distancias(root: Path | None) -> int:
     from src.solve import solve_parte6
 
     solve_parte6(root=root, verbose=True)
     return 0
-
 
 def _cmd_viz(root: Path | None) -> int:
     from src.graphs.graph import graph_from_csv_files
@@ -74,13 +48,11 @@ def _cmd_viz(root: Path | None) -> int:
     run_all_visualizations(grafo, root=root)
     return 0
 
-
 def _cmd_parte2(root: Path | None) -> int:
     from src.parte2 import solve_parte2
 
     solve_parte2(root=root, verbose=True)
     return 0
-
 
 def _cmd_analise(root: Path | None) -> int:
     from src.graphs.graph import graph_from_csv_files
@@ -92,7 +64,6 @@ def _cmd_analise(root: Path | None) -> int:
         print(f"  {p}")
     return 0
 
-
 def _cmd_interativo(root: Path | None) -> int:
     from src.graphs.graph import graph_from_csv_files
     from src.analise_visual import gerar_grafo_interativo
@@ -101,7 +72,6 @@ def _cmd_interativo(root: Path | None) -> int:
     html_path = gerar_grafo_interativo(grafo, root=root)
     print(f"Grafo interativo gerado: {html_path}")
     return 0
-
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
@@ -117,19 +87,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     subparsers = parser.add_subparsers(dest="cmd", required=True)
 
-    # --- gerar ---
+                   
     subparsers.add_parser(
         "gerar",
         help="Gera data/adjacencias_aeroportos.csv a partir do modelo interno",
     )
 
-    # --- validar ---
+                     
     subparsers.add_parser(
         "validar",
         help="Valida aeroportos_data.csv + adjacencias_aeroportos.csv",
     )
 
-    # --- metricas ---
+                      
     subparsers.add_parser(
         "metricas",
         help=(
@@ -138,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
 
-    # --- distancias ---
+                        
     subparsers.add_parser(
         "distancias",
         help=(
@@ -147,19 +117,19 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
 
-    # --- viz ---
+                 
     subparsers.add_parser(
         "viz",
         help="Gera visualizações estáticas e análises (Requisitos 7 e 8) + HTML interativo (Req 9)",
     )
 
-    # --- interativo ---
+                        
     subparsers.add_parser(
         "interativo",
         help="Req 9: gera apenas out/grafo_interativo.html (pyvis)",
     )
 
-    # --- parte2 ---
+                    
     subparsers.add_parser(
         "parte2",
         help=(
@@ -168,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
 
-    # --- analise ---
+                     
     subparsers.add_parser(
         "analise",
         help="Req 10: gera visualizações exploratórias e explanatórias (AVD)",
@@ -188,7 +158,6 @@ def main(argv: list[str] | None = None) -> int:
         "analise": _cmd_analise,
     }
     return dispatch[args.cmd](root)
-
 
 if __name__ == "__main__":
     sys.exit(main())
