@@ -515,39 +515,60 @@ _REGION_COLORS = {
 _HUBS = {"BSB", "GRU", "GIG"}
 
 def _explr_dispersao_grau_densidade(grafo: Graph, out_dir: Path) -> Path:
-    ego_data = calc_ego(grafo)
+    ego_data  = calc_ego(grafo)
     reg_lookup = {iata: node.regiao for iata, node in grafo.nodes.items()}
 
-    fig, ax = plt.subplots(figsize=(10, 7))
-
-    region_groups: dict[str, list] = {}
+    clusters: dict[tuple, dict] = {}
     for d in ego_data:
-        r = reg_lookup[d["aeroporto"]]
-        region_groups.setdefault(r, []).append(d)
+        regiao = reg_lookup[d["aeroporto"]]
+        key    = (d["grau"], round(d["densidade_ego"], 4), regiao)
+        if key not in clusters:
+            clusters[key] = {"grau": d["grau"], "densidade": round(d["densidade_ego"], 4),
+                             "regiao": regiao, "aeroportos": []}
+        clusters[key]["aeroportos"].append(d["aeroporto"])
 
-    for regiao, items in sorted(region_groups.items()):
-        xs = [d["grau"] for d in items]
-        ys = [d["densidade_ego"] for d in items]
-        color = _REGION_COLORS.get(regiao, "#aaaaaa")
-        ax.scatter(xs, ys, c=color, s=130, label=regiao, zorder=3,
-                   edgecolors="white", linewidths=0.8)
-        for d in items:
-            ax.annotate(
-                d["aeroporto"], (d["grau"], d["densidade_ego"]),
-                textcoords="offset points", xytext=(6, 3),
-                fontsize=8, color="#333333",
-            )
+    pos_count: dict[tuple, int] = {}
+    for cl in clusters.values():
+        pos = (cl["grau"], cl["densidade"])
+        pos_count[pos] = pos_count.get(pos, 0) + 1
+
+    pos_seen: dict[tuple, int] = {}
+
+    fig, ax = plt.subplots(figsize=(11, 7))
+
+    legend_done: set = set()
+    for key, cl in sorted(clusters.items()):
+        color  = _REGION_COLORS.get(cl["regiao"], "#aaaaaa")
+        count  = len(cl["aeroportos"])
+        size   = 180 + count * 120
+        label  = cl["regiao"] if cl["regiao"] not in legend_done else "_nolegend_"
+        legend_done.add(cl["regiao"])
+
+        pos = (cl["grau"], cl["densidade"])
+        n_at_pos = pos_count[pos]
+        idx_at_pos = pos_seen.get(pos, 0)
+        pos_seen[pos] = idx_at_pos + 1
+
+        step   = 0.35
+        offset = (idx_at_pos - (n_at_pos - 1) / 2) * step
+        x_plot = cl["grau"] + offset
+
+        ax.scatter(x_plot, cl["densidade"], c=color, s=size, label=label,
+                   zorder=3, edgecolors="white", linewidths=1.2, alpha=0.88)
+
 
     ax.set_xlabel("Grau (número de conexões)", fontsize=11)
     ax.set_ylabel("Densidade da ego-rede", fontsize=11)
-    ax.set_title("Dispersão: Grau vs. Densidade Ego por Aeroporto", fontsize=13,
-                 fontweight="bold", pad=14)
-    ax.legend(title="Região", fontsize=9, title_fontsize=9)
+    ax.set_title("Dispersão: Grau vs. Densidade Ego por Aeroporto",
+                 fontsize=13, fontweight="bold", pad=14)
+    handles, labels = ax.get_legend_handles_labels()
+    for h in handles:
+        h.set_sizes([80])
+    ax.legend(handles, labels, title="Região", fontsize=9, title_fontsize=9)
     ax.grid(True, linestyle="--", alpha=0.35)
-    ax.set_ylim(-0.05, 1.15)
+    ax.set_ylim(-0.05, 1.22)
 
-                             
-    ax.text(0.02, 0.08,
+    ax.text(0.02, 0.06,
             "Aeroportos regionais: grau baixo, ego-rede totalmente densa\n"
             "Hubs nacionais: grau máximo, ego-rede com mesma densidade da rede global",
             transform=ax.transAxes, fontsize=8.5, color="#555555",
