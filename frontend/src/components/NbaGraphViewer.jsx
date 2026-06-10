@@ -4,40 +4,44 @@ import {
 import { Network } from 'vis-network'
 import { DataSet } from 'vis-data'
 
-// cores das camadas BFS (destaque de algoritmo)
-const LAYER_COLORS = [
-  '#ffd54f', '#4fc3f7', '#81c784', '#ff8a65',
-  '#b39ddb', '#f06292', '#4dd0e1', '#aed581',
-]
-
 const DIM_OPACITY = 0.14
 const DIM_EDGE = { color: '#1a1a28', opacity: 0.08 }
 const NEIGH_EDGE = { color: '#4fc3f7', opacity: 0.9 }
 
-// bola de basquete (SVG embutido — sem dependência externa)
-const BASKETBALL =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">` +
+function _hex2rgb(hex) {
+  const h = hex.replace('#', '')
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
+}
+
+function basketballSvg(hex) {
+  const [r, g, b] = _hex2rgb(hex)
+  const light = `rgb(${Math.min(255, Math.round(r + (255 - r) * 0.45))},${Math.min(255, Math.round(g + (255 - g) * 0.45))},${Math.min(255, Math.round(b + (255 - b) * 0.45))})`
+  const dark  = `rgb(${Math.round(r * 0.50)},${Math.round(g * 0.50)},${Math.round(b * 0.50)})`
+  const seam  = `rgb(${Math.round(r * 0.22)},${Math.round(g * 0.22)},${Math.round(b * 0.22)})`
+  return (
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">` +
       `<defs><radialGradient id="b" cx="38%" cy="30%" r="75%">` +
-      `<stop offset="0%" stop-color="#ffac4d"/>` +
-      `<stop offset="55%" stop-color="#e8741b"/>` +
-      `<stop offset="100%" stop-color="#b3500a"/>` +
+      `<stop offset="0%" stop-color="${light}"/>` +
+      `<stop offset="55%" stop-color="${hex}"/>` +
+      `<stop offset="100%" stop-color="${dark}"/>` +
       `</radialGradient></defs>` +
       `<circle cx="50" cy="50" r="49" fill="url(#b)"/>` +
-      `<g stroke="#2a1206" stroke-width="2.6" fill="none" stroke-linecap="round">` +
+      `<g stroke="${seam}" stroke-width="2.6" fill="none" stroke-linecap="round">` +
       `<line x1="50" y1="2" x2="50" y2="98"/>` +
       `<line x1="2" y1="50" x2="98" y2="50"/>` +
       `<path d="M17,11 C41,37 41,63 17,89"/>` +
       `<path d="M83,11 C59,37 59,63 83,89"/>` +
       `</g></svg>`,
+    )
   )
+}
 
 function dirKey(a, b) {
   return `${a}>${b}`
 }
 
-// objeto de cor do anel (borda colorida em volta da bola) por tier
 function ringColor(c) {
   return {
     background: c,
@@ -95,18 +99,21 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
     const adj = {}
     const tierById = {}
     const ringById = {}
+    const imgById = {}
     const origSize = {}
     data.nodes.forEach((n) => {
       adj[n.id] = new Set()
       tierById[n.id] = n.tier
-      ringById[n.id] = n.color?.background ?? '#fbbf24'
+      const c = n.color?.background ?? '#fbbf24'
+      ringById[n.id] = c
+      imgById[n.id] = basketballSvg(c)
       origSize[n.id] = n.size
     })
     data.edges.forEach((e) => {
       adj[e.from]?.add(e.to)
       adj[e.to]?.add(e.from)
     })
-    return { adj, tierById, ringById, origSize }
+    return { adj, tierById, ringById, imgById, origSize }
   }, [data])
 
   useImperativeHandle(ref, () => ({
@@ -131,16 +138,34 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
     const edgeById = Object.fromEntries(data.edges.map((e) => [e.id, e]))
 
     const vNodes = new DataSet(
-      data.nodes.map((n) => ({
-        ...n,
-        shape: 'circularImage',
-        image: BASKETBALL,
-        brokenImage: BASKETBALL,
-        color: ringColor(n.color?.background ?? '#fbbf24'),
-        borderWidth: 3,
-        borderWidthSelected: 5,
-        opacity: 1,
-      })),
+      data.nodes.map((n) => {
+        const c = n.color?.background ?? '#fbbf24'
+        const img = basketballSvg(c)
+        return {
+          id: n.id,
+          label: n.label,
+          playerName: n.playerName,
+          defaultLabel: n.defaultLabel,
+          tooltipHtml: n.tooltipHtml,
+          group: n.group,
+          tier: n.tier,
+          tierLabel: n.tierLabel,
+          out_degree: n.out_degree,
+          in_degree: n.in_degree,
+          best_partner: n.best_partner,
+          best_partner_pts: n.best_partner_pts,
+          font: n.font,
+          shadow: n.shadow,
+          size: n.size,
+          shape: 'circularImage',
+          image: img,
+          brokenImage: img,
+          color: ringColor(c),
+          borderWidth: 3,
+          borderWidthSelected: 5,
+          opacity: 1,
+        }
+      }),
     )
     const vEdges = new DataSet(data.edges.map((e) => ({ ...e })))
     nodesDS.current = vNodes
@@ -231,7 +256,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
   useEffect(() => {
     if (!nodesDS.current || !edgesDS.current || !data || !meta) return
 
-    const { adj, tierById, ringById, origSize } = meta
+    const { adj, tierById, ringById, imgById, origSize } = meta
 
     // ---- Modo animação: dim total + revelação progressiva do percurso ----
     if (animation) {
@@ -255,6 +280,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
           label: showAllLabels ? n.playerName : n.defaultLabel,
           opacity: on ? 1 : 0.1,
           size: isNewest ? origSize[n.id] + 8 : on ? origSize[n.id] + 2 : origSize[n.id],
+          image: imgById[n.id],
           color: isNewest ? ringColor(accent) : ringColor(ringById[n.id]),
         }
       }))
@@ -286,7 +312,7 @@ const NbaGraphViewer = forwardRef(function NbaGraphViewer(
 
       const color = ringColor(ringById[n.id])
       const opacity = neigh && !neigh.has(n.id) ? DIM_OPACITY : 1
-      return { id: n.id, hidden: false, label, color, size: origSize[n.id], opacity }
+      return { id: n.id, hidden: false, label, color, image: imgById[n.id], size: origSize[n.id], opacity }
     })
     nodesDS.current.update(nodeUpdates)
 

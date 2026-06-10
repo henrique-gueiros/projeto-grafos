@@ -1,0 +1,127 @@
+<h2>Como fica o painel lateral?</h2>
+<p class="subtitle">A estrutura atual tem Algoritmos, Filtros, Caminhos Obrigatórios e Conexões por Região</p>
+
+<div class="split">
+
+  <!-- Option A: Redesigned sidebar matching reference -->
+  <div class="mockup" data-choice="a" onclick="toggleSelect(this)" style="cursor:pointer;">
+    <div class="mockup-header">A — Reformulado (como na referência)</div>
+    <div class="mockup-body" style="padding:0;background:#050a14;min-height:420px;font-family:monospace;position:relative;">
+
+      <!-- Tab bar -->
+      <div style="display:flex;border-bottom:1px solid rgba(0,150,255,0.2);background:#060d1c;">
+        <div style="padding:8px 14px;font-size:10px;color:#7edcff;border-bottom:2px solid #00b4ff;letter-spacing:1px;">FLIGHT</div>
+        <div style="padding:8px 14px;font-size:10px;color:#334;letter-spacing:1px;">FILTERS</div>
+      </div>
+
+      <!-- Algorithms section -->
+      <div style="padding:10px 10px 6px;border-bottom:1px solid rgba(0,150,255,0.1);">
+        <div style="font-size:9px;color:#3a6080;letter-spacing:2px;margin-bottom:8px;">ALGORITHMS</div>
+        <!-- Input fields -->
+        <div style="background:rgba(0,100,200,0.08);border:1px solid rgba(0,150,255,0.2);border-radius:4px;padding:5px 8px;margin-bottom:4px;font-size:9px;color:#4a7090;">Origem (ex: REC)</div>
+        <div style="background:rgba(0,100,200,0.08);border:1px solid rgba(0,150,255,0.15);border-radius:4px;padding:5px 8px;margin-bottom:8px;font-size:9px;color:#4a7090;">Destino — Dijkstra</div>
+        <!-- Algo buttons - styled -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
+          <div style="background:rgba(59,154,255,0.15);border:1px solid rgba(59,154,255,0.4);border-radius:4px;padding:6px;font-size:9px;color:#7edcff;text-align:center;letter-spacing:1px;">BFS</div>
+          <div style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:4px;padding:6px;font-size:9px;color:#a78bfa;text-align:center;letter-spacing:1px;">DFS</div>
+          <div style="background:rgba(245,197,66,0.15);border:1px solid rgba(245,197,66,0.3);border-radius:4px;padding:6px;font-size:9px;color:#f5c542;text-align:center;letter-spacing:1px;">DIJKSTRA</div>
+          <div style="border:1px solid rgba(255,255,255,0.05);border-radius:4px;padding:6px;font-size:9px;color:#223;text-align:center;">BELLMAN</div>
+        </div>
+      </div>
+
+      <!-- Filters section -->
+      <div style="padding:10px 10px 6px;border-bottom:1px solid rgba(0,150,255,0.1);">
+        <div style="font-size:9px;color:#3a6080;letter-spacing:2px;margin-bottom:8px;">FILTERS</div>
+        <div style="font-size:8px;color:#2a4060;margin-bottom:4px;">REGIÃO</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;">
+          <span style="padding:2px 6px;border-radius:2px;font-size:8px;background:rgba(45,212,191,0.15);color:#2dd4bf;border:1px solid rgba(45,212,191,0.3);">Norte</span>
+          <span style="padding:2px 6px;border-radius:2px;font-size:8px;background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);">Nordeste</span>
+          <span style="padding:2px 6px;border-radius:2px;font-size:8px;color:#334;border:1px solid rgba(255,255,255,0.06);">Sudeste</span>
+          <span style="padding:2px 6px;border-radius:2px;font-size:8px;color:#334;border:1px solid rgba(255,255,255,0.06);">Sul</span>
+          <span style="padding:2px 6px;border-radius:2px;font-size:8px;color:#334;border:1px solid rgba(255,255,255,0.06);">Centro</span>
+        </div>
+        <div style="font-size:8px;color:#2a4060;margin-bottom:4px;">TIPO DE LIGAÇÃO</div>
+        <div style="display:flex;gap:3px;">
+          <span style="padding:2px 6px;border-radius:2px;font-size:8px;color:#334;border:1px solid rgba(255,255,255,0.06);">Regional</span>
+          <span style="padding:2px 6px;border-radius:2px;font-size:8px;color:#334;border:1px solid rgba(255,255,255,0.06);">Hub</span>
+          <span style="padding:2px 6px;border-radius:2px;font-size:8px;color:#334;border:1px solid rgba(255,255,255,0.06);">Hub-Hub</span>
+        </div>
+      </div>
+
+      <!-- Caminhos section -->
+      <div style="padding:10px 10px 6px;">
+        <div style="font-size:9px;color:#3a6080;letter-spacing:2px;margin-bottom:8px;">CAMINHOS OBRIGATÓRIOS</div>
+        <div style="background:rgba(245,197,66,0.08);border:1px solid rgba(245,197,66,0.25);border-radius:4px;padding:6px 8px;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:#f5c542;box-shadow:0 0 4px #f5c542;"></div>
+          <span style="font-size:9px;color:#c8a030;">Recife — Porto Alegre</span>
+        </div>
+        <div style="background:rgba(245,197,66,0.05);border:1px solid rgba(245,197,66,0.15);border-radius:4px;padding:6px 8px;display:flex;align-items:center;gap:6px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:rgba(245,197,66,0.4);"></div>
+          <span style="font-size:9px;color:#806820;">Manaus — São Paulo</span>
+        </div>
+      </div>
+
+      <!-- Bottom badge: selected visual style indicator -->
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:6px 10px;background:rgba(0,0,0,0.5);border-top:1px solid rgba(0,150,255,0.1);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:8px;color:#2a5070;letter-spacing:1px;">REDE ATIVA</span>
+        <span style="font-size:8px;color:#3a8090;">ONLINE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Same structure, dark/neon skin -->
+  <div class="mockup" data-choice="b" onclick="toggleSelect(this)" style="cursor:pointer;">
+    <div class="mockup-header">B — Mesmo layout, visual neon aplicado</div>
+    <div class="mockup-body" style="padding:0;background:#0a1020;min-height:420px;font-family:sans-serif;">
+
+      <!-- Simple header -->
+      <div style="padding:10px 10px 6px;border-bottom:1px solid #1a2a40;">
+        <div style="font-size:10px;color:#7edcff;letter-spacing:1px;margin-bottom:8px;">Algoritmos</div>
+        <div style="background:#0d1828;border:1px solid #1a2a40;border-radius:6px;padding:5px 8px;margin-bottom:4px;font-size:9px;color:#3a5070;">Origem (ex: REC)</div>
+        <div style="background:#0d1828;border:1px solid #1a2a40;border-radius:6px;padding:5px 8px;margin-bottom:8px;font-size:9px;color:#3a5070;">Destino — Dijkstra</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
+          <div style="background:rgba(59,130,246,0.18);border:1px solid rgba(59,130,246,0.35);border-radius:6px;padding:6px;font-size:9px;color:#93c5fd;text-align:center;">BFS</div>
+          <div style="background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.3);border-radius:6px;padding:6px;font-size:9px;color:#a5b4fc;text-align:center;">DFS</div>
+          <div style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:6px;font-size:9px;color:#fcd34d;text-align:center;">Dijkstra</div>
+          <div style="border:1px solid #1a2a40;border-radius:6px;padding:6px;font-size:9px;color:#223344;text-align:center;">Bellman-Ford</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div style="padding:10px 10px 6px;border-bottom:1px solid #1a2a40;">
+        <div style="font-size:10px;color:#7edcff;letter-spacing:1px;margin-bottom:6px;">Filtros</div>
+        <div style="font-size:8px;color:#2a4060;margin-bottom:4px;">Região</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px;">
+          <span style="padding:2px 8px;border-radius:12px;font-size:8px;background:rgba(45,212,191,0.2);color:#2dd4bf;border:1px solid rgba(45,212,191,0.4);">Norte</span>
+          <span style="padding:2px 8px;border-radius:12px;font-size:8px;background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);">Nordeste</span>
+          <span style="padding:2px 8px;border-radius:12px;font-size:8px;color:#334455;border:1px solid #1a2a40;">Sudeste</span>
+          <span style="padding:2px 8px;border-radius:12px;font-size:8px;color:#334455;border:1px solid #1a2a40;">Sul</span>
+          <span style="padding:2px 8px;border-radius:12px;font-size:8px;color:#334455;border:1px solid #1a2a40;">Centro</span>
+        </div>
+        <div style="font-size:8px;color:#2a4060;margin-bottom:4px;">Tipo de ligação</div>
+        <div style="display:flex;gap:3px;">
+          <span style="padding:2px 8px;border-radius:12px;font-size:8px;color:#334455;border:1px solid #1a2a40;">Regional</span>
+          <span style="padding:2px 8px;border-radius:12px;font-size:8px;color:#334455;border:1px solid #1a2a40;">Hub</span>
+          <span style="padding:2px 8px;border-radius:12px;font-size:8px;color:#334455;border:1px solid #1a2a40;">Hub-Hub</span>
+        </div>
+      </div>
+
+      <!-- Caminhos -->
+      <div style="padding:10px;">
+        <div style="font-size:10px;color:#7edcff;letter-spacing:1px;margin-bottom:6px;">Caminhos Obrigatórios</div>
+        <div style="background:#0d1828;border:1px solid #1a2a40;border-radius:8px;padding:7px 10px;margin-bottom:5px;display:flex;align-items:center;gap:6px;">
+          <span style="width:8px;height:3px;border-radius:2px;background:#f59e0b;display:inline-block;"></span>
+          <span style="font-size:9px;color:#94a3b8;">Recife — Porto Alegre</span>
+        </div>
+        <div style="background:#0d1828;border:1px solid #1a2a40;border-radius:8px;padding:7px 10px;display:flex;align-items:center;gap:6px;">
+          <span style="width:8px;height:3px;border-radius:2px;background:#6366f1;display:inline-block;"></span>
+          <span style="font-size:9px;color:#94a3b8;">Manaus — São Paulo</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">A reformula a estrutura do painel inteiramente (estilo cockpit). B mantém a mesma hierarquia de seções com o visual neon aplicado em cima.</p>
