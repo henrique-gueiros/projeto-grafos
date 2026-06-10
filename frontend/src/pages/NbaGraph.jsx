@@ -108,6 +108,7 @@ export default function NbaGraph() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
+  const [activeTab, setActiveTab] = useState('analysis')
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type })
@@ -178,14 +179,48 @@ export default function NbaGraph() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#0f0f1a]">
 
-      <header className="flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b border-slate-700 shrink-0">
-        <div>
-          <h1 className="text-sm font-bold text-slate-100">🏀 Parte 2 — Rede de Assistências NBA</h1>
-          <p className="text-xs text-slate-500">Grafo dirigido ponderado · tier por grau total</p>
+      <header
+        className="flex items-center justify-between px-4 py-2 shrink-0"
+        style={{ background: '#030710', borderBottom: '1px solid rgba(0,150,255,0.12)' }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{
+            fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 14,
+            color: '#7edcff', letterSpacing: '3px',
+          }}>
+            REDE DE ASSISTÊNCIAS NBA
+          </span>
+          <span style={{
+            fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 10, color: '#1a3a50',
+            letterSpacing: '2px', border: '1px solid rgba(0,150,255,0.15)',
+            borderRadius: 2, padding: '1px 5px', display: 'inline-block', width: 'fit-content',
+          }}>
+            PARTE 2
+          </span>
         </div>
         <div className="flex gap-1.5">
-          <button onClick={() => navigate('/')} className="btn-secondary text-xs">Início</button>
-          <button onClick={() => navigate('/parte2/dashboard')} className="btn-primary text-xs">Dashboard</button>
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 10, letterSpacing: '1px',
+              padding: '5px 10px', borderRadius: 3, cursor: 'pointer',
+              border: '1px solid rgba(0,180,255,0.25)', color: '#2a5070', background: 'transparent',
+              transition: 'border-color 0.15s, color 0.15s',
+            }}
+          >
+            INÍCIO
+          </button>
+          <button
+            onClick={() => navigate('/parte2/dashboard')}
+            style={{
+              fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 10, letterSpacing: '1px',
+              padding: '5px 10px', borderRadius: 3, cursor: 'pointer',
+              border: '1px solid rgba(0,180,255,0.4)', color: '#7edcff', background: 'rgba(0,180,255,0.08)',
+              transition: 'all 0.15s',
+            }}
+          >
+            DASHBOARD
+          </button>
         </div>
       </header>
 
@@ -228,42 +263,68 @@ export default function NbaGraph() {
             <div className="absolute top-3 right-3 flex gap-1.5 z-10">
               <button
                 onClick={() => graphRef.current?.fit()}
-                className="btn-secondary text-xs px-2.5 py-1.5 shadow-lg"
+                style={{
+                  fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 10, letterSpacing: '1px',
+                  padding: '5px 10px', borderRadius: 3, cursor: 'pointer',
+                  border: '1px solid rgba(0,180,255,0.25)', color: '#2a5070',
+                  background: 'rgba(3,6,16,0.85)', transition: 'all 0.15s',
+                }}
               >
-                Centralizar
+                CENTRALIZAR
               </button>
               <button
                 onClick={() => setPhysicsOn((p) => !p)}
-                className={`text-xs px-2.5 py-1.5 rounded-lg font-medium shadow-lg transition-all
-                  ${physicsOn
-                    ? 'bg-amber-600 hover:bg-amber-500 text-white'
-                    : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'}`}
+                style={{
+                  fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 10, letterSpacing: '1px',
+                  padding: '5px 10px', borderRadius: 3, cursor: 'pointer',
+                  border: physicsOn ? '1px solid rgba(245,197,66,0.4)' : '1px solid rgba(0,180,255,0.25)',
+                  color: physicsOn ? '#f5c542' : '#2a5070',
+                  background: physicsOn ? 'rgba(245,197,66,0.08)' : 'rgba(3,6,16,0.85)',
+                  transition: 'all 0.15s',
+                }}
               >
-                {physicsOn ? 'Pausar física' : 'Retomar física'}
+                {physicsOn ? 'PAUSAR' : 'FÍSICA'}
               </button>
             </div>
           )}
 
           {/* stats + legenda */}
           {data && (
-            <div className="absolute bottom-3 left-3 flex flex-col gap-1.5 z-10 max-w-[240px]">
-              <span className="text-xs bg-slate-800/90 border border-slate-700 px-2.5 py-1 rounded-lg text-slate-400">
-                {data.num_nodes} jogadores · {data.num_edges} assistências
-              </span>
-              <div className="bg-slate-800/90 border border-slate-700 rounded-lg px-2.5 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1.5">Tier (grau total)</p>
-                <div className="space-y-1">
+            <div style={{ position: 'absolute', bottom: 12, left: 12, zIndex: 10, display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 240 }}>
+              {/* contagem */}
+              <div style={{
+                background: 'rgba(3,6,16,0.88)',
+                border: '1px solid rgba(0,150,255,0.12)',
+                borderRadius: 3, padding: '4px 10px',
+                fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 9,
+                color: '#2a5070', letterSpacing: '1px',
+                display: 'flex', gap: 12,
+              }}>
+                <span>⬡ {data.num_nodes} jogadores</span>
+                <span>→ {data.num_edges} assistências</span>
+              </div>
+              {/* legenda de tiers */}
+              <div style={{
+                background: 'rgba(3,6,16,0.88)',
+                border: '1px solid rgba(0,150,255,0.12)',
+                borderRadius: 3, padding: '8px 10px',
+                fontFamily: "'ui-sans-serif', monospace", fontWeight: 900,
+              }}>
+                <p style={{ fontSize: 9, color: '#1a3a50', letterSpacing: '2px', marginBottom: 8 }}>
+                  TIER — GRAU TOTAL
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   {data.tiers.map((t) => (
-                    <div key={t.tier} className="flex items-center gap-2 text-xs text-slate-400">
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: t.color }} />
-                      {t.label}
+                    <div key={t.tier} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: t.color }} />
+                      <span style={{ fontSize: 10, color: '#2a5070', letterSpacing: '0.5px' }}>{t.label}</span>
                     </div>
                   ))}
                 </div>
-                <div className="border-t border-slate-700 my-1.5" />
-                <p className="text-[10px] text-slate-500 leading-relaxed">
-                  Seta = direção da assistência · espessura = pontos gerados.
-                  Clique num nó para ver a vizinhança.
+                <div style={{ borderTop: '1px solid rgba(0,150,255,0.10)', margin: '8px 0' }} />
+                <p style={{ fontSize: 9, color: '#1a3a50', letterSpacing: '0.5px', lineHeight: 1.6 }}>
+                  SETA = direção · ESPESSURA = pontos.<br />
+                  Clique num nó para ver vizinhança.
                 </p>
               </div>
             </div>
@@ -271,142 +332,227 @@ export default function NbaGraph() {
 
           {/* painel de info do nó selecionado */}
           {selectedNode && (
-            <div className="absolute top-3 left-3 z-10 bg-slate-800/95 border border-slate-700 rounded-lg px-3 py-2.5 text-xs shadow-xl max-w-[260px]">
-              <p className="font-bold text-sm text-amber-300 mb-1">{selectedNode.playerName}</p>
-              <p className="text-slate-400">Grau saída: <span className="text-slate-200">{selectedNode.out_degree}</span> ·
-                {' '}entrada: <span className="text-slate-200">{selectedNode.in_degree}</span></p>
-              <p className="text-slate-400">Tier: <span className="text-slate-200">{selectedNode.tierLabel}</span></p>
-              {selectedNode.best_partner && (
-                <p className="text-slate-400">Melhor parceria: <span className="text-slate-200">{selectedNode.best_partner}</span> ({selectedNode.best_partner_pts} pts)</p>
-              )}
+            <div style={{
+              position: 'absolute', top: 12, left: 12, zIndex: 10,
+              background: 'rgba(3,6,16,0.92)',
+              border: '1px solid rgba(0,150,255,0.18)',
+              borderRadius: 3, padding: '10px 12px',
+              fontFamily: "'ui-sans-serif', monospace", fontWeight: 900,
+              maxWidth: 260,
+            }}>
+              <p style={{ fontSize: 13, color: '#7edcff', letterSpacing: '1px', marginBottom: 8 }}>
+                {selectedNode.playerName.toUpperCase()}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <p style={{ fontSize: 10, color: '#1a3a50', letterSpacing: '0.5px' }}>
+                  SAÍDA <span style={{ color: '#2a5070' }}>{selectedNode.out_degree}</span>
+                  {'  ·  '}
+                  ENTRADA <span style={{ color: '#2a5070' }}>{selectedNode.in_degree}</span>
+                </p>
+                <p style={{ fontSize: 10, color: '#1a3a50', letterSpacing: '0.5px' }}>
+                  TIER <span style={{ color: '#2a5070' }}>{selectedNode.tierLabel}</span>
+                </p>
+                {selectedNode.best_partner && (
+                  <p style={{ fontSize: 10, color: '#1a3a50', letterSpacing: '0.5px' }}>
+                    PARCERIA <span style={{ color: '#2a5070' }}>{selectedNode.best_partner}</span>
+                    {' '}
+                    <span style={{ color: '#1a3a50' }}>({selectedNode.best_partner_pts} pts)</span>
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </main>
 
-        <aside className="w-80 shrink-0 bg-slate-800/80 border-l border-slate-700 overflow-y-auto">
-          <div className="p-3 space-y-4">
+        <aside
+          className="w-80 shrink-0 flex flex-col overflow-hidden"
+          style={{ background: '#060d1c', borderLeft: '1px solid rgba(0,150,255,0.15)' }}
+        >
+          {/* Tab bar */}
+          <div className="cockpit-tab-bar">
+            <button
+              className={`cockpit-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+              onClick={() => setActiveTab('analysis')}
+            >
+              ANALYSIS
+            </button>
+            <button
+              className={`cockpit-tab ${activeTab === 'filters' ? 'active' : ''}`}
+              onClick={() => setActiveTab('filters')}
+            >
+              FILTERS
+            </button>
+          </div>
 
-            <section>
-              <p className="section-title">Buscar jogador</p>
-              <input
-                type="text"
-                placeholder="Digite um nome…"
-                value={search}
-                onChange={(e) => handleSearch(e.target.value)}
-                list="nba-players-list"
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-              />
-              <datalist id="nba-players-list">
-                {players.map((p) => <option key={p} value={p} />)}
-              </datalist>
-            </section>
+          <datalist id="nba-players-list">
+            {players.map((p) => <option key={p} value={p} />)}
+          </datalist>
 
-            <div className="border-t border-slate-700" />
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto">
+            {activeTab === 'analysis' ? (
+              <div>
+                {/* ── ALGORITHMS ─────────────────────────── */}
+                <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
+                  <span className="cockpit-label">Algorithms</span>
+                  <div className="space-y-1.5 mb-3">
+                    <div className="relative">
+                      <span style={{ position: 'absolute', left: 9, top: 7, fontSize: 11, color: '#1a4060', fontFamily: "'ui-sans-serif', monospace", fontWeight: 900 }}>▶</span>
+                      <input
+                        type="text"
+                        placeholder="Origem (ex: G. Antetokounmpo)"
+                        value={source}
+                        onChange={(e) => setSource(e.target.value)}
+                        list="nba-players-list"
+                        className="neon-input"
+                      />
+                    </div>
+                    <div className="relative">
+                      <span style={{ position: 'absolute', left: 9, top: 7, fontSize: 11, color: '#0a2040', fontFamily: "'ui-sans-serif', monospace", fontWeight: 900 }}>▶</span>
+                      <input
+                        type="text"
+                        placeholder="Destino — Dijkstra / Bellman-Ford"
+                        value={target}
+                        onChange={(e) => setTarget(e.target.value)}
+                        list="nba-players-list"
+                        className="neon-input"
+                      />
+                    </div>
+                  </div>
 
-            <section>
-              <div className="flex items-center justify-between mb-2">
-                <p className="section-title mb-0">Filtrar por tier</p>
-                {activeTiers.length > 0 && (
-                  <button onClick={() => setActiveTiers([])} className="text-xs text-slate-500 hover:text-slate-300">
-                    Limpar
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-col gap-1">
-                {data?.tiers.map((t) => {
-                  const on = activeTiers.includes(t.tier)
-                  return (
-                    <button
-                      key={t.tier}
-                      onClick={() => toggleTier(t.tier)}
-                      aria-pressed={on}
-                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs transition-all text-left
-                        ${on ? 'border-transparent text-slate-900 font-medium' : 'border-slate-600 text-slate-400 hover:border-slate-400'}`}
-                      style={on ? { background: t.color } : {}}
-                    >
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: t.color }} />
-                      {t.label} ({t.count})
-                    </button>
-                  )
-                })}
-              </div>
-            </section>
-
-            <div className="border-t border-slate-700" />
-
-            <section>
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="section-title mb-0">Mostrar todos os rótulos</span>
-                <input
-                  type="checkbox"
-                  checked={showAllLabels}
-                  onChange={(e) => setShowAllLabels(e.target.checked)}
-                  className="accent-amber-500 w-4 h-4"
-                />
-              </label>
-            </section>
-
-            <div className="border-t border-slate-700" />
-
-            <section>
-              <p className="section-title">Algoritmos</p>
-              <div className="space-y-1.5">
-                <input
-                  type="text"
-                  placeholder="Origem (ex: G. Antetokounmpo)"
-                  value={source}
-                  onChange={(e) => setSource(e.target.value)}
-                  list="nba-players-list"
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Destino — Dijkstra / Bellman-Ford"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                  list="nba-players-list"
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
-                <div className="grid grid-cols-2 gap-1.5">
-                  {[
-                    // Gestalt Similaridade: mesmas cores do Dashboard — BFS=azul, DFS=verde, Dijkstra=âmbar, BF=rosa
-                    { id: 'BFS', label: 'BFS', color: '#38bdf8' },
-                    { id: 'DFS', label: 'DFS', color: '#4ade80' },
-                    { id: 'DIJKSTRA', label: 'Dijkstra', color: '#fbbf24' },
-                    { id: 'BELLMAN-FORD', label: 'Bellman-Ford', color: '#f472b6' },
-                  ].map((a) => {
-                    const on = activeAlg === a.id
-                    return (
+                  <div className="grid grid-cols-2 gap-1.5 mb-3">
+                    {[
+                      { id: 'BFS',          label: 'BFS',          cls: 'neon-btn-blue'   },
+                      { id: 'DFS',          label: 'DFS',          cls: 'neon-btn-purple' },
+                      { id: 'DIJKSTRA',     label: 'DIJKSTRA',     cls: 'neon-btn-gold'   },
+                      { id: 'BELLMAN-FORD', label: 'BELLMAN',      cls: 'neon-btn-pink'   },
+                    ].map((a) => (
                       <button
                         key={a.id}
                         onClick={() => runAlgo(a.id)}
-                        disabled={!data || loading}
-                        className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-all disabled:opacity-50
-                          ${on ? 'text-slate-900' : 'text-slate-200 hover:brightness-110'}`}
-                        style={on
-                          ? { background: a.color }
-                          : { background: `${a.color}26`, border: `1px solid ${a.color}66` }}
+                        disabled={!data || !!loading}
+                        className={`neon-btn ${a.cls} disabled:opacity-40`}
+                        style={activeAlg === a.id ? { outline: '1px solid currentColor', outlineOffset: 1 } : {}}
                       >
                         {loading === a.id ? <Spinner /> : a.label}
                       </button>
-                    )
-                  })}
+                    ))}
+                  </div>
+
+                  <p style={{ fontSize: 10, color: '#1a3a50', fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, lineHeight: 1.6 }}>
+                    Algoritmos rodam sobre o grafo completo (3520 jogadores).
+                    Dijkstra/Bellman destacam o caminho; BFS colore por camadas;
+                    DFS mostra estatísticas.
+                  </p>
+
+                  {algoResult && (
+                    <div className="mt-2">
+                      <AlgoResult result={algoResult} />
+                    </div>
+                  )}
                 </div>
-                <p className="text-[10px] text-slate-500 leading-relaxed">
-                  Algoritmos rodam sobre o grafo completo (3520 jogadores). Dijkstra/Bellman-Ford
-                  destacam o caminho; BFS colore por camadas; DFS mostra estatísticas. O destaque
-                  aparece nos nós presentes nesta amostra.
-                </p>
-                {algoResult && <AlgoResult result={algoResult} />}
               </div>
-            </section>
+            ) : (
+              <div>
+                {/* ── BUSCAR JOGADOR ──────────────────────── */}
+                <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
+                  <span className="cockpit-label">Buscar Jogador</span>
+                  <div className="relative">
+                    <span style={{ position: 'absolute', left: 9, top: 7, fontSize: 11, color: '#1a4060', fontFamily: "'ui-sans-serif', monospace", fontWeight: 900 }}>▶</span>
+                    <input
+                      type="text"
+                      placeholder="Digite um nome…"
+                      value={search}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      list="nba-players-list"
+                      className="neon-input"
+                    />
+                  </div>
+                </div>
 
-            <div className="border-t border-slate-700" />
+                {/* ── TIER ───────────────────────────────── */}
+                <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
+                  <span className="cockpit-label">Tier</span>
+                  <div className="space-y-1.5">
+                    {data?.tiers.map((t) => {
+                      const on = activeTiers.includes(t.tier)
+                      return (
+                        <button
+                          key={t.tier}
+                          onClick={() => toggleTier(t.tier)}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: 7,
+                            padding: '5px 8px', borderRadius: 3,
+                            background: on ? `${t.color}1e` : 'transparent',
+                            border: on ? `1px solid ${t.color}55` : `1px solid ${t.color}1e`,
+                            cursor: 'pointer', transition: 'all 0.15s',
+                            fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 11, letterSpacing: '1px',
+                          }}
+                        >
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: on ? t.color : `${t.color}4d` }} />
+                          <span style={{ flex: 1, textAlign: 'left', color: on ? t.color : '#3a4050' }}>
+                            {t.label.toUpperCase()} ({t.count})
+                          </span>
+                          <span style={{ width: 20, height: 10, borderRadius: 5, position: 'relative', flexShrink: 0, background: on ? t.color : '#0d1828', border: on ? 'none' : '1px solid #1a2a3a', transition: 'background 0.15s' }}>
+                            <span style={{ position: 'absolute', top: 1, borderRadius: '50%', width: 8, height: 8, background: on ? 'white' : '#1a2a3a', left: on ? 11 : 1, transition: 'left 0.15s' }} />
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
 
-            <button onClick={clearAll} className="btn-secondary w-full text-xs">
-              Limpar / Mostrar tudo
-            </button>
+                {/* ── EXIBIÇÃO ───────────────────────────── */}
+                <div className="p-3" style={{ borderBottom: '1px solid rgba(0,150,255,0.08)' }}>
+                  <span className="cockpit-label">Exibição</span>
+                  <button
+                    onClick={() => setShowAllLabels((v) => !v)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 7,
+                      padding: '5px 8px', borderRadius: 3,
+                      background: showAllLabels ? 'rgba(0,180,255,0.08)' : 'transparent',
+                      border: showAllLabels ? '1px solid rgba(0,180,255,0.3)' : '1px solid rgba(0,150,255,0.1)',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 11, letterSpacing: '1px',
+                    }}
+                  >
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: showAllLabels ? '#7edcff' : 'rgba(0,180,255,0.3)' }} />
+                    <span style={{ flex: 1, textAlign: 'left', color: showAllLabels ? '#7edcff' : '#3a4050' }}>TODOS OS RÓTULOS</span>
+                    <span style={{ width: 20, height: 10, borderRadius: 5, position: 'relative', flexShrink: 0, background: showAllLabels ? '#00b4ff' : '#0d1828', border: showAllLabels ? 'none' : '1px solid #1a2a3a', transition: 'background 0.15s' }}>
+                      <span style={{ position: 'absolute', top: 1, borderRadius: '50%', width: 8, height: 8, background: showAllLabels ? 'white' : '#1a2a3a', left: showAllLabels ? 11 : 1, transition: 'left 0.15s' }} />
+                    </span>
+                  </button>
+                </div>
 
+                {/* ── LIMPAR ─────────────────────────────── */}
+                <div className="p-3">
+                  <button
+                    onClick={clearAll}
+                    style={{
+                      width: '100%', padding: '6px', borderRadius: 3, textAlign: 'center',
+                      fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 10, letterSpacing: '2px',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      border: '1px solid rgba(255,50,50,0.2)', color: '#3a1a1a',
+                      background: 'transparent',
+                    }}
+                  >
+                    LIMPAR TUDO
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Status footer */}
+          <div style={{
+            padding: '7px 12px', flexShrink: 0,
+            background: 'rgba(2,5,12,0.9)',
+            borderTop: '1px solid rgba(0,150,255,0.08)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            fontFamily: "'ui-sans-serif', monospace", fontWeight: 900, fontSize: 11, letterSpacing: '1px',
+          }}>
+            <span style={{ color: '#1a3a50' }}>NBA ASSIST</span>
+            <span style={{ color: '#0a6040' }}>● ONLINE</span>
           </div>
         </aside>
       </div>

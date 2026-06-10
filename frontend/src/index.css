@@ -145,8 +145,10 @@ div.vis-tooltip {
 .neon-btn-blue   { background: rgba(0,180,255,0.12);   border-color: rgba(0,180,255,0.35);   color: #7edcff; }
 .neon-btn-purple { background: rgba(99,102,241,0.12);  border-color: rgba(99,102,241,0.30);  color: #a78bfa; }
 .neon-btn-gold   { background: rgba(245,197,66,0.12);  border-color: rgba(245,197,66,0.30);  color: #f5c542; }
+.neon-btn-pink   { background: rgba(244,114,182,0.12);  border-color: rgba(244,114,182,0.30);  color: #f472b6; }
 .neon-btn-dim    { border-color: rgba(255,255,255,0.04); color: #1a2a3a; cursor: not-allowed; }
 .neon-btn-blue:hover   { background: rgba(0,180,255,0.22); }
 .neon-btn-purple:hover { background: rgba(99,102,241,0.22); }
 .neon-btn-gold:hover   { background: rgba(245,197,66,0.22); }
+.neon-btn-pink:hover   { background: rgba(244,114,182,0.22); }
 .neon-btn-dim:hover { background: transparent; }

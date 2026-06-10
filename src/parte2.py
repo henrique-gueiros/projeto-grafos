@@ -946,6 +946,13 @@ TIER_LABELS = {
     "C": "Médio (20–49)",
     "D": "Base (< 20)",
 }
+TIER_SIZES = {
+    "S": 40,
+    "A": 30,
+    "B": 22,
+    "C": 15,
+    "D": 10,
+}
 
 # Estrelas-âncora do subgrafo interativo (união dos 1-hop BFS)
 NBA_SAMPLE_STARS = ["G. Antetokounmpo", "T. Young", "G. Hill"]
@@ -1009,7 +1016,7 @@ def build_nba_sample(g) -> dict:
         id_ = in_deg[n]
         tier = get_tier(n)
         color = TIER_COLORS[tier]
-        size = max(8, min(45, 8 + int((od / max_od) ** 0.5 * 37)))
+        size = TIER_SIZES[tier]
         # label padrão: mostrar apenas para nós com grau de saída >= 10
         default_label = n if od >= 10 else ""
         bp = best_partner.get(n)
