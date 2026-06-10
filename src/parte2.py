@@ -62,9 +62,28 @@ def _compute_stats(g) -> dict:
         },
     }
 
-                                                                             
-     
-                                                                             
+
+def _weight_percentiles(g) -> dict[str, int]:
+    weights = sorted(e.weight for e in g.edges())
+
+    def pct(p: float) -> int:
+        return int(weights[int(len(weights) * p)])
+
+    return {"p50": pct(0.50), "p90": pct(0.90), "p99": pct(0.99)}
+
+
+def _top_by_degree(g, top_n: int = 15) -> dict[str, list[dict[str, int | str]]]:
+    top_out = sorted(
+        ({"nome": n, "grau": g.out_degree(n)} for n in g.nodes),
+        key=lambda x: -x["grau"],
+    )[:top_n]
+    top_in = sorted(
+        ({"nome": n, "grau": g.in_degree(n)} for n in g.nodes),
+        key=lambda x: -x["grau"],
+    )[:top_n]
+    return {"top_passadores": top_out, "top_recebedores": top_in}
+
+
 
 def _run_bfs(g, sources: list[str]) -> list[dict]:
     from src.graphs.digraph_algorithms import bfs_directed
@@ -706,11 +725,23 @@ def solve_parte2(root: Path | None = None, verbose: bool = True) -> None:
     _viz_weight_distribution(g, out / "parte2_distribuicao_pesos.png")
     _viz_bfs_layers(bfs_results, out / "parte2_bfs_camadas.png")
 
-                        
-                       
+  
+    if verbose:
+        print("\nGerando HTML interativo...")
+    _gerar_html_interativo(g, out / "grafo_nba_interativo.html")
+
+    
+    sample = build_nba_sample(g)
     report = {
         "dataset": str(csv_path),
         "graph_stats": stats,
+        "weight_percentiles": _weight_percentiles(g),
+        "rankings": _top_by_degree(g),
+        "sample_subgraph": {
+            "stars": sample["stars"],
+            "num_nodes": sample["num_nodes"],
+            "num_edges": sample["num_edges"],
+        },
         "bfs": bfs_results,
         "dfs": dfs_results,
         "dijkstra": dijkstra_results,
