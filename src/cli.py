@@ -64,15 +64,6 @@ def _cmd_analise(root: Path | None) -> int:
         print(f"  {p}")
     return 0
 
-def _cmd_interativo(root: Path | None) -> int:
-    from src.graphs.graph import graph_from_csv_files
-    from src.analise_visual import gerar_grafo_interativo
-
-    grafo = graph_from_csv_files(root=root)
-    html_path = gerar_grafo_interativo(grafo, root=root)
-    print(f"Grafo interativo gerado: {html_path}")
-    return 0
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m src.cli",
@@ -120,16 +111,10 @@ def main(argv: list[str] | None = None) -> int:
                  
     subparsers.add_parser(
         "viz",
-        help="Gera visualizações estáticas e análises (Requisitos 7 e 8) + HTML interativo (Req 9)",
+        help="Gera visualizações estáticas e análises (Requisitos 7, 8 e 10)",
     )
 
-                        
-    subparsers.add_parser(
-        "interativo",
-        help="Req 9: gera apenas out/grafo_interativo.html (pyvis)",
-    )
 
-                    
     subparsers.add_parser(
         "parte2",
         help=(
@@ -153,7 +138,6 @@ def main(argv: list[str] | None = None) -> int:
         "metricas": _cmd_metricas,
         "distancias": _cmd_distancias,
         "viz": _cmd_viz,
-        "interativo": _cmd_interativo,
         "parte2": _cmd_parte2,
         "analise": _cmd_analise,
     }

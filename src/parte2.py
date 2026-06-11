@@ -725,12 +725,6 @@ def solve_parte2(root: Path | None = None, verbose: bool = True) -> None:
     _viz_weight_distribution(g, out / "parte2_distribuicao_pesos.png")
     _viz_bfs_layers(bfs_results, out / "parte2_bfs_camadas.png")
 
-  
-    if verbose:
-        print("\nGerando HTML interativo...")
-    _gerar_html_interativo(g, out / "grafo_nba_interativo.html")
-
-    
     sample = build_nba_sample(g)
     report = {
         "dataset": str(csv_path),

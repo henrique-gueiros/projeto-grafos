@@ -43,7 +43,6 @@ def api_status() -> dict[str, Any]:
         "regioes_json": (OUT_DIR / "regioes.json").exists(),
         "graus_csv": (OUT_DIR / "graus.csv").exists(),
         "distancias_csv": (OUT_DIR / "distancias_rotas.csv").exists(),
-        "grafo_html": (OUT_DIR / "grafo_interativo.html").exists(),
     }
 
                                                                              
