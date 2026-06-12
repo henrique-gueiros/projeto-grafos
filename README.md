@@ -2,6 +2,10 @@
 
 Disciplina de Grafos — Parte 1: Rede de Aeroportos do Brasil (grafo não-dirigido) e Parte 2: Rede de Assistências da NBA (dígrafo).
 
+# Slides
+
+https://canva.link/yada5mizhjj0xxs
+
 ## Requisitos
 
 - Python 3.11 ou superior
